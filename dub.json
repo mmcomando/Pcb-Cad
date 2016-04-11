@@ -1,0 +1,43 @@
+{
+	"name" : "pcb_cad",
+	"description" : "PCB!",
+	"copyright" : "Copyright © 2015, pc",
+	"authors" : [
+	"pc"
+	],
+	"dependencies" : {
+		"glamour" : ">=0.0.0",
+		"cerealed" : ">=0.0.0"
+	},
+	"libs" : [
+		"GL"
+	],
+	"excludedSourceFiles":[
+		"source/engine/window_gtk.d",
+		"source/engine/window_sdl.d"
+	],
+	"configurations": [
+		{
+			"name": "sdl",
+			"targetType": "executable",
+			"versions": ["window_sdl"],
+			"dependencies" : {
+				"derelict-sdl2": ">=0.0.0",
+			},
+			"sourceFiles":[
+				"source/engine/window_sdl.d",
+			]
+		},
+		{
+			"name": "gtk",
+			"targetType": "executable",
+			"versions": ["window_gtk"],
+			"dependencies" : {
+				"gtk-d:gtkd" : ">=0.0.0"
+			},
+			"sourceFiles":[
+				"source/engine/window_gtk.d",
+			]
+		}
+	]
+}

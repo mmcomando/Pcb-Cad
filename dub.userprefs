@@ -1,0 +1,19 @@
+﻿<Properties StartupItem="dub.json">
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="sdl" PreferredExecutionTarget="debug" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="source/drawables.d">
+    <Files>
+      <File FileName="source/engine/renderer/render.d" Line="25" Column="14" />
+      <File FileName="source/drawables.d" Line="5" Column="1" />
+      <File FileName="source/run.d" Line="200" Column="14" />
+      <File FileName="source/objects.d" Line="241" Column="7" />
+      <File FileName="source/footprint_renderer.d" Line="8" Column="20" />
+      <File FileName="source/project_actions.d" Line="264" Column="15" />
+      <File FileName="source/utils.d" Line="7" Column="29" />
+      <File FileName="source/engine/window_sdl.d" Line="4" Column="19" />
+    </Files>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+</Properties>
