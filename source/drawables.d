@@ -177,7 +177,6 @@ final class Text : Drawable {
         glBindVertexArray(vao);
 		glUniform3f(tmp.color, color.x, color.y, color.z);
         gameEngine.renderer.setModelMatrix(trf.toMatrix);
-		//gameEngine.renderer.setModelMatrix(fin.toMatrix);
         glDrawArrays(GL_TRIANGLES, data.start / (vec2.sizeof * 2), (data.end - data.start) / (vec2.sizeof * 2));
     }
 
@@ -296,15 +295,15 @@ private:
         return pixelData;
     }
 
+	private static  immutable charHalfSize = vec2(0.5, 1);
     static vec2[] getTextPosCords(string txt) {
         vec2[] posCord;
         posCord.reserve(12 * txt.length);
 
-        vec2 charHalfSize = vec2(0.5, 1);
-        vec2 charPos = vec2(0, 0);
+		vec2 charPos = vec2(0,0);
         foreach (ubyte c; txt) {
             if (c == '\n') {
-                charPos.x = 0;
+				charPos.x = charHalfSize.x;
                 charPos.y -= charHalfSize.y * 2;
                 continue;
             }
@@ -326,6 +325,19 @@ private:
         }
         return posCord;
     }
+	//not tested
+	static vec2 getTextSize(string txt) {
+		if(txt.length==0)return vec2(0,0);
+		vec2 stingSize = vec2(0, charHalfSize.y*2);
+		foreach (ubyte c; txt) {
+			if (c == '\n') {
+				stingSize.x+=charHalfSize.y * 2;
+				continue;
+			}
+			stingSize.x+=charHalfSize.y*2;
+		}
+		return stingSize;
+	}
 
 }
 

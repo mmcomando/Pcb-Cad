@@ -31,8 +31,12 @@ class FootprintRenderer  {
 			_trf = t;
 			group.trf=t;
 			r.trf=t;
-			foreach (tt; texts) {
-				tt.trf=_trf*tt.trf;
+			foreach (ref tt; texts) {
+				//writeln("-");
+				//writeln(tt.trf);
+				tt.text.trf=_trf*tt.trf;
+				//writeln(tt.trf);
+
 			}
 		}
 		
@@ -127,15 +131,22 @@ class FootprintRenderer  {
             auto data = Text.fromString(name);
 			Shape sh = footprint.f.shapes[pad.shapeID];
             data.trf=footprint.trf;
+			data.trf.pos=vec2(0,0);
 			trf.rot=data.trf.rot = 0;
 			trf.pos=sh.pos;
             if (sh.type == ShapeType.Rectangle && sh.xy.x < sh.xy.y) {
 				trf.rot+= 3.14 / 2;
             }
             data.trf.scale =min(sh.xy.x, sh.xy.y);
+			writeln(TextPos(data,trf));
             d.texts ~= TextPos(data,trf);
+			assert(0);
 
         }
+
+		auto data = Text.fromString(f.name);
+		vec2 bb_dt=f.boundingBox[1]-f.boundingBox[0];
+		d.texts ~= TextPos(data,Transform(vec2(0,0),0,0.2*bb_dt.y));
 
         datas ~= d;
 		d.group.add(background);

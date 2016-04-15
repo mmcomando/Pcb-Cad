@@ -6,11 +6,13 @@ import kicad_enums;
 import ki_ld = kicad_lib;
 import ki_mod = kicad_mod;
 
+enum real SC=1.0/1000.0;
+
 FootprintData[] getFootprintsFromModFile(string path) {
     ki_mod.ModFile lib;
     lib.loadFromFile(path);
     FootprintData[] ffs;
-    ffs.length = lib.modules.length;
+	ffs.length=lib.modules.length;
     foreach (i, m; lib.modules) {
         ffs[i] = fromKicadFootprint(m);
     }
@@ -20,26 +22,19 @@ FootprintData[] getFootprintsFromModFile(string path) {
 private FootprintData fromKicadFootprint(ki_mod.Module md) {
     FootprintData ft = new FootprintData;
     foreach (ref ob; md.DS) {
-        vec2 p1 = vec2(ob.x1, ob.y1);
-        vec2 p2 = vec2(ob.x2, ob.y2);
+		vec2 p1 = vec2(ob.x1, ob.y1)*SC;
+		vec2 p2 = vec2(ob.x2, ob.y2)*SC;
         ft.lines ~= [p1, p2];
     }
 
     foreach (ref ob; md.DC) {
-        vec2 p1 = vec2(ob.x1, ob.y1);
-        vec2 p2 = vec2(ob.x2, ob.y2);
+		vec2 p1 = vec2(ob.x1, ob.y1)*SC;
+		vec2 p2 = vec2(ob.x2, ob.y2)*SC;
         ft.circles ~= Circle(p1, (p1 - p2).length);
     }
-    foreach (ref ob; md.DA) {
-        vec2 p1 = vec2(ob.x1, ob.y1);
-        vec2 p2 = vec2(ob.x2, ob.y2);
-        vec2 st_en = vec2(0, ob.angle);
-        //TODO starting point is on p2
-        ft.arcs ~= Arc(p1, st_en, (p1 - p2).length);
-    }
     foreach (uint i, ref ob; md.pads) {
-        vec2 p1 = vec2(ob.po.x, ob.po.y);
-        vec2 p2 = vec2(ob.sh.sizex, ob.sh.sizey);
+		vec2 p1 = vec2(ob.po.x, ob.po.y)*SC;
+		vec2 p2 = vec2(ob.sh.sizex, ob.sh.sizey)*SC;
         Pad p;
         //p.pos=p1;
         ft.snapPoints ~= p1;
@@ -78,12 +73,9 @@ private FootprintData fromKicadFootprint(ki_mod.Module md) {
         case PADShape.C:
             shape.type = ShapeType.Circle;
             shape.xy.x = shape.xy.y = min(shape.xy.x, shape.xy.y);
-            shape.xy.x = shape.xy.y = max(shape.xy.x, 0.1);
+            shape.xy.x = shape.xy.y = max(shape.xy.x, 0.0001);
             ft.shapes ~= shape;
             p.shapeID = cast(uint) ft.shapes.length - 1;
-            //break;
-            //ft.points~=p1;
-            //p.shapeID=cast(uint)ft.shapes.length-1;
         }
         ft.pads ~= p;
 

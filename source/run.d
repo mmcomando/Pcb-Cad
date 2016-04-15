@@ -40,7 +40,7 @@ void init() {
 	Circles.init();
 	Text.init();
 	dText = new DynamicText(100);
-	dText.trf=Transform(vec2(-75,45),0,2);
+	dText.trf=Transform(vec2(0,0),0,10);
 	dText.color=vec3(0,0,0);
 
 	testText = Text.fromString("adfghALSJIDb asdasud7asud,a896412';][;/.\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';");
@@ -75,7 +75,7 @@ void init() {
 		foreach (libF; lib.footprints) {
 			Footprint f = new Footprint(libF);
 			project.addFootprint(f);
-			f.trf =Transform( vec2(i % perRow, i / perRow) * 30,0,1);
+			f.trf =Transform( vec2(i % perRow, i / perRow) * 0.04,0,1);
 			i++;
 		}
 	}
@@ -129,8 +129,6 @@ void run() {
 		vec2 dt = gameEngine.globalMousePos - newMousePos;
 		renderer.camera.pos += dt;
 	}
-	if (gameEngine.window.keyPressed('p'))
-		writeln(gameEngine.globalMousePos);
 
 	if (gameEngine.window.keyPressed('f'))
 		writefln("%5.3f (%5.2fms, %5.2fms)", gameEngine.fps, gameEngine.minTime * 1000, gameEngine.maxTime * 1000);
@@ -176,7 +174,7 @@ void run() {
 	{
 		import std.conv;
 		import std.format;
-		string sss = format("fps: %8.2f  %4.2fms %4.2fms\nx: %10.2f\ny: %10.2f",
+		string sss = format("fps: %8.2f  %4.2fms %4.2fms\nx: %10.5f\ny: %10.5f",
 			gameEngine.fps,gameEngine.minTime * 1000, gameEngine.maxTime * 1000,gameEngine.globalMousePos.x,gameEngine.globalMousePos.y);
 		dText.set(sss);
 	}
@@ -186,9 +184,9 @@ void run() {
 	  project.grid.addToDraw(renderer.renderList);
 	 foreach (tr; project.traces)
 	     tr.addToDraw(renderer.renderList);
-	renderer.renderList.add(centralCircle, Priority(250));
-	 renderer.renderList.add(cursor, Priority(250));
-	renderer.renderList.add(testText, Priority(251));
+	//renderer.renderList.add(centralCircle, Priority(250));
+	 //renderer.renderList.add(cursor, Priority(250));
+	//renderer.renderList.add(testText, Priority(251));
 	 renderer.guiRenderList.add(dText, Priority(251));
 	 foreach (sm; somethingAutoRender)
 	  renderer.renderList.add(sm, Priority(200));

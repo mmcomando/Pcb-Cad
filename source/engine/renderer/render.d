@@ -77,7 +77,7 @@ public:
     GLuint modelMatrixUbo;
     GLuint projectionBindingPoint = 2;
     GLuint modelBindingPoint = 3;
-    Camera camera = Camera(vec2(640, 480), vec2(0, 0), 0.5);
+    Camera camera = Camera(vec2(640, 480), vec2(0, 0), 1000);
 	RenderList renderList;
 	RenderList guiRenderList;
     void init() {
@@ -111,9 +111,8 @@ public:
         renderList.reset();
 
 		Camera guiCamera=camera;
-		guiCamera.pos=vec2(0,0);
-		guiCamera.zoom=0.5;
-		projection = buildProjectionMatrix(guiCamera);
+		guiCamera.pos=vec2(guiCamera.wh.x,-guiCamera.wh.y);
+		projection = buildProjectionMatrixForGui(guiCamera);
 		setProjectionMatrix(projection);
 		guiRenderList.sort();
 		guiRenderList.draw();
@@ -218,4 +217,34 @@ private mat4 buildProjectionMatrix(Camera cam) {
     m[2][3] = 0.0f; //zBias;
     m[3][3] = 1.0f;
     return m;
+}
+
+private mat4 buildProjectionMatrixForGui(Camera cam) {
+	mat4 m = void;
+	float w = cam.wh.x;
+	float h = cam.wh.y;
+	vec2 extents = vec2(w,h);	
+	vec2 lower = cam.pos - extents;
+	vec2 upper = cam.pos + extents;
+	
+	m[0][0] = 4.0f / (upper.x - lower.x);
+	m[1][0] = 0.0f;
+	m[2][0] = 0.0f;
+	m[3][0] = 0.0f;
+	
+	m[0][1] = 0.0f;
+	m[1][1] = 4.0f / (upper.y - lower.y);
+	m[2][1] = 0.0f;
+	m[3][1] = 0.0f;
+	
+	m[0][2] = 0.0f;
+	m[1][2] = 0.0f;
+	m[2][2] = 1.0f;
+	m[3][2] = 0.0f;
+
+	m[0][3] = -(upper.x + lower.x) / (upper.x - lower.x);
+	m[1][3] = -(upper.y + lower.y) / (upper.y - lower.y);
+	m[2][3] = 0.0f; //zBias;
+	m[3][3] = 1.0f;
+	return m;
 }

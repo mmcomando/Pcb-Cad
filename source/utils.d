@@ -70,7 +70,7 @@ vec2 rotateVector(vec2 p, float r) {
 }
 
 struct Transform{
-	vec2 pos;
+	vec2 pos=vec2(0,0);
 	float rot=0;
 	float scale=1;
 

@@ -539,7 +539,7 @@ class FootprintData {
         } else {
             minn = vec2(0, 0);
         }
-        maxx = minn + vec2(0.1, 0.1);
+        maxx = minn + vec2(0.00001, 0.00001);
         foreach (p; points) {
             minn.x = min(p.x, minn.x);
             minn.y = min(p.y, minn.y);
