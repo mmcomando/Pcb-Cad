@@ -69,19 +69,6 @@ vec2 rotateVector(vec2 p, float r) {
 	return vec2(c * p.x - s * p.y, s * p.x + c * p.y);
 }
 
-/*mat4 getModelMatrix(T)(T o) if (__traits(hasMember, T, "pos") && is(typeof(T.pos) == vec2)
-	&& __traits(hasMember, T, "scale") && is(typeof(T.scale) == vec2) && __traits(hasMember, T,
-		"rot") && is(typeof(T.rot) == float)) {
-	alias c = cos;
-	alias s = sin;
-
-	return mat4(o.scale.x * c(o.rot), -o.scale.y * s(o.rot), 0, o.pos.x,
-		o.scale.x * s(o.rot),  o.scale.y * c(o.rot), 0, o.pos.y,
-		0, 0, 1, 0,
-		0, 0, 0, 1);
-
-}*/
-
 struct Transform{
 	vec2 pos;
 	float rot=0;
@@ -218,7 +205,6 @@ bool traceCollideWithPoint(Trace trace, vec2 point) {
 }
 
 bool traceCollideWithPad(Trace trace, Footprint footprint, uint shapeID) {
-	//writeln(shapeID);
 	Shape shape = footprint.f.shapes[shapeID];
 	vec2 point = footprint.trf.pos + rotateVector(shape.pos, footprint.trf.rot);
 	float minDistance = trace.traceWidth + min(shape.xy.x, shape.xy.y);
@@ -248,6 +234,6 @@ bool removeElementInPlace(R, N)(ref R arr, N obj)
 }
 
 
-///auto render chack, need because i had such a system before, have to be deleted
+///auto render chack, need because i had such a system before. have to be deleted
 
 Something[] somethingAutoRender;

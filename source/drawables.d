@@ -22,9 +22,6 @@ import shaders;
 final class Something : Drawable {
     GpuMemory data;
 	Transform trf;
-    /*vec2 pos = vec2(0, 0);
-    vec2 scale = vec2(1, 1);
-    float rot = 0;*/
     vec3 color = vec3(0, 0, 0);
     GLenum mode = GL_TRIANGLES;
 
@@ -134,7 +131,6 @@ final class Group : Drawable {
 	
 	void draw() {
 		if(drawables.length==0)return;
-		writeln(trf);
 		gameEngine.renderer.setModelMatrix(trf.toMatrix);
 		drawables[0].onBind();
 		foreach(d;drawables){
@@ -155,9 +151,6 @@ private enum vec2i texSize = vec2i(1024, 512);
 final class Text : Drawable {
     GpuMemory data;
 	Transform trf;
-    /*vec2 pos = vec2(0, 0);
-    vec2 scale = vec2(1, 1);
-    float rot = -3.14f / 4f;*/
     vec3 color = vec3(0, 0, 1);
 
     void onBind() {
@@ -343,9 +336,6 @@ private:
 final class DynamicText : Drawable {
     GpuMemory data;
 	Transform trf;
-    /*vec2 pos = vec2(0, 0);
-    vec2 scale = vec2(1, 1);
-    float rot = 0;*/
     vec3 color = vec3(0, 1, 1);
 
     private size_t size; //actual string size
@@ -413,9 +403,6 @@ final class Circles : Drawable {
 
     GpuMemory data;
 	Transform trf;
-    /*vec2 pos = vec2(0, 0);
-    vec2 scale = vec2(1, 1);
-    float rot = 0;*/
     bool filled = false;
     void onBind() {
         auto tmp = CirclesInstancedProgram.get;

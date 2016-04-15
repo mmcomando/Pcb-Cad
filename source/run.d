@@ -27,10 +27,10 @@ Text testText;
 DynamicText dText;
 
 //TODO :
+//shapes <- very importatnt :/
 // connection nets from string to uint ID
 
 void init() {
-	//test();
 	renderer = gameEngine.renderer;
 	renderer.init();
 	SomethingProgram.init();
@@ -39,8 +39,9 @@ void init() {
 	Something.init();
 	Circles.init();
 	Text.init();
-	dText = new DynamicText(1000);
-	//dText.rot = 1;
+	dText = new DynamicText(100);
+	dText.trf=Transform(vec2(-75,45),0,2);
+	dText.color=vec3(0,0,0);
 
 	testText = Text.fromString("adfghALSJIDb asdasud7asud,a896412';][;/.\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';");
 	testText.trf.pos=vec2(0,0);
@@ -61,9 +62,8 @@ void init() {
 	project.name = "test";
 	try {
 		project.footprintsLibraries ~= new FootprintsLibrary("libcms.mod");
-		//project.footprintsLibraries~=new FootprintsLibrary("sockets.mod");//TODO won't load fix loader
+		//project.footprintsLibraries~=new FootprintsLibrary("sockets.mod");//TODO won't load, fix kicad_loader
 		//project.footprintsLibraries~=new FootprintsLibrary("connect.mod");
-
 	}
 	catch (Exception e) {
 		printException(e);
@@ -80,22 +80,11 @@ void init() {
 		}
 	}
 
-	//project.addRandomConnections();
-	//project.addConnections();
-	displayConnections(project);
-	Footprint.rend.addToDraw(renderer.renderList);
-	drawTmpTrace();
-	//project.grid.addToDraw(renderer.renderList);
-	foreach (tr; project.traces)
-		tr.addToDraw(renderer.renderList);
-	renderer.renderList.add(centralCircle, Priority(250));
-	renderer.renderList.add(cursor, Priority(250));
 	GC.disable();
 
 }
 
 bool snapEnabled = false;
-float tmppp;
 void run() {
 	if (initialized == false) {
 		init();
@@ -187,22 +176,10 @@ void run() {
 	{
 		import std.conv;
 		import std.format;
-		string sss = format("fps: %8.2f\nx: %10.2f\ny: %10.2f",gameEngine.fps,gameEngine.globalMousePos.x,gameEngine.globalMousePos.y);
+		string sss = format("fps: %8.2f  %4.2fms %4.2fms\nx: %10.2f\ny: %10.2f",
+			gameEngine.fps,gameEngine.minTime * 1000, gameEngine.maxTime * 1000,gameEngine.globalMousePos.x,gameEngine.globalMousePos.y);
 		dText.set(sss);
-		dText.trf=Transform(vec2(-75,45),0,2);
-		dText.color=vec3(0,0,0);
 	}
-	/*{
-	 import std.conv;
-	 import std.random;
-	 
-	 ubyte[] bbb;
-	 bbb.length = uniform(0, 1000);
-	 foreach (ref s; bbb)
-	 s = uniform(cast(ubyte) 0, cast(ubyte) 255);
-	 string sss = bbb.to!string;
-	 dText.set(sss);
-	 }*/
 	displayConnections(project);
 	 Footprint.rend.addToDraw(renderer.renderList);
 	 drawTmpTrace();

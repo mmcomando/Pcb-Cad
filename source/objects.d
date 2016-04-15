@@ -66,13 +66,6 @@ struct ConnectionsManager {
                     }
                 }
             }
-
-            /*foreach (ref conn; connections) {
-				if(conn.name==trace.connection){
-					conn.traces~=trace;
-					return;
-				}
-			}*/
         } else {
             vec2[2] closestPoints;
             foreach (ref conn; connections) {
@@ -132,20 +125,7 @@ void addRandomConnections(PcbProject proj) {
         }
     }
 }
-/*
-void addConnections(PcbProject proj){
-	foreach(footprint;proj.footprints){
-		foreach(uint padNum,conName;footprint.padConnections){
-			if(conName.empty || conName=="?")continue;
 
-			Connection con;
-			con.name=conName;
-			con.pads~=PadID(footprint,padNum);
-			proj.connectionsManager.connections~=con;
-			//con.name.writeln;
-		}
-	}
-}*/
 void displayConnections(PcbProject proj) {
     auto getPoints(Connection* conn) {
         static vec2 getPos(T)(T a) {
@@ -153,12 +133,10 @@ void displayConnections(PcbProject proj) {
             vec2 padPos = f.f.shapes[f.f.pads[a.padNum].shapeID].pos;
             return rotateVector(padPos, f.trf.rot) + a.footprint.trf.pos;
         }
-        //auto padPoints=conn.pads.map!(a=>a.footprint.f.shapes[a.footprint.f.pads[a.padNum].shapeID].pos+a.footprint.pos)();
         auto padPoints = conn.pads.map!getPos();
         auto tracePoints = conn.traces.map!("a.points").joiner; //.take(1)
         //padPoints.each!writeln;
         return chain(padPoints, tracePoints);
-        //return chain(padPoints,trac.poi); 
 
     }
 
@@ -168,9 +146,6 @@ void displayConnections(PcbProject proj) {
         if (conn.name == "?")
             continue;
         toConnect[conn.name] ~= &conn;
-    }
-    foreach (name; toConnect.byKey) {
-        //	writeln(name);
     }
 
     foreach (toConn; toConnect) {
@@ -284,7 +259,6 @@ class PcbProject {
     }
 
     void addFootprint(Footprint f) {
-        f.addToDraw();
         footprints ~= f;
         connectionsManager.add(f);
     }
@@ -353,27 +327,6 @@ class TransformFootprint : Action {
     }
 
 }
-/*
-class RotateFootprint : Action {
-    float from;
-    float to;
-    Footprint footprint;
-    this(Footprint ft, float from, float to) {
-        footprint = ft;
-        this.from = from;
-        this.to = to;
-    }
-
-    void doAction() {
-        footprint.rot = to;
-    }
-
-    void undoAction() {
-        footprint.rot = from;
-    }
-
-}*/
-
 class RemoveFootprint : Action {
     PcbProject project;
     Footprint footprint;
@@ -458,32 +411,11 @@ class FootprintsLibrary {
 class Footprint {
     static FootprintRenderer rend;
     FootprintRenderer.Data rendData;
-
     const FootprintData f;
-   /*private vec2 _pos = vec2(0, 0);
-    private float _rot = 0;*/
 	Transform _trf;
     string name;
     string[] padConnections;
 
-	/* @property vec2 pos() {
-        return _pos;
-    }
-
-    @property vec2 pos(vec2 p) {
-        if (rendData !is null)
-            rendData.pos = _pos = p;
-        return _pos;
-    }
-
-    @property float rot() {
-        return _rot;
-    }
-
-    @property void rot(float r) {
-        if (rendData !is null)
-            rendData.rot = _rot = r; //bug
-    }*/
 	void trf(Transform t) {
 		_trf = t;
 		rendData.trf=t;
@@ -497,25 +429,12 @@ class Footprint {
         if (rend is null)
             rend = new FootprintRenderer;
         this.f = f;
+		rendData = rend.addFootprint(this);
         padConnections.length = f.pads.length;
         foreach (i, ref p; padConnections)
             p = f.pads[i].connection;
     }
 
-    this() {
-        if (rend is null)
-            rend = new FootprintRenderer;
-        f = new FootprintData();
-        padConnections.length = f.pads.length;
-        foreach (ref p; padConnections)
-            p = "?";
-        assert(0);
-    }
-
-    void addToDraw() {
-        rendData = rend.addFootprint(this);
-
-    }
 
     void removeFromDraw() {
         rend.removeFootprint(rendData);
@@ -533,6 +452,8 @@ class Footprint {
 
 }
 
+
+// ALmost everything from here is to be redone: pads,shape system
 enum PadType {
     SMD,
     THT

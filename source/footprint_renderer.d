@@ -27,39 +27,12 @@ class FootprintRenderer  {
     }
 
     static class Data {
-        /*void pos(vec2 p) {
-            _pos = p;
-			group.trf.pos=pos;
-            r.pos = p;
-            foreach (tt; texts)
-                tt.text.pos = rotateVector(tt.pos, rot) + pos; //pos+tt.pos;
-        }
-
-        vec2 pos() {
-            return _pos;
-        }
-
-        void rot(float r) {
-            _rot = r;
-			group.trf.rot=r;
-            this.r.rot = r;
-            foreach (tt; texts) {
-                tt.text.rot = r + tt.rot;
-                tt.text.pos = rotateVector(tt.pos, rot) + pos;
-            }
-        }
-
-        float rot() {
-            return _rot;
-        }*/
 		void trf(Transform t) {
 			_trf = t;
 			group.trf=t;
 			r.trf=t;
 			foreach (tt; texts) {
 				tt.trf=_trf*tt.trf;
-				/*tt.text.rot = r + tt.rot;
-				tt.text.pos = rotateVector(tt.pos, rot) + pos;*/
 			}
 		}
 		
@@ -71,15 +44,9 @@ class FootprintRenderer  {
 		}
 
     private:
-        /*Something lines;
-		Something points;
-		Something triangles;
-		Something background;*/
 		Group group;
         TextPos[] texts;
         Circles r;
-        //vec2 _pos;
-        //float _rot;
 		Transform _trf;
     }
 
@@ -101,7 +68,6 @@ class FootprintRenderer  {
         vec2 v3 = vec2(b[1].x, b[0].y);
         vec2 v4 = b[0];
         background = SomethingNoTransform.fromPoints([v1, v2, v4, v4, v2, v3]);
-        //background.pos = footprint.pos;
         background.color = vec3(0.8, 0.8, 0.8);
         background.mode = GL_TRIANGLES;
         foreach (ref p; f.points) {
@@ -116,12 +82,10 @@ class FootprintRenderer  {
             rendLines ~= l[1];
         }
 		lines = SomethingNoTransform.fromPoints(rendLines);
-        //lines.pos = footprint.pos;
         lines.color = vec3(0, 1, 1);
         lines.mode = GL_LINES;
 
 		points = SomethingNoTransform.fromPoints(f.points);
-        //points.pos = footprint.pos;
         points.color = vec3(0, 1, 0);
         points.mode = GL_POINTS;
         Circles.CircleData[] metas;
@@ -152,8 +116,6 @@ class FootprintRenderer  {
 		triangles = SomethingNoTransform.fromPoints(trianglePoints);
         d.r = Circles.addCircles(metas);
         d.r.trf =footprint.trf;
-        //triangles.pos = footprint.pos;
-        //triangles.rot = footprint.rot;
         triangles.color = vec3(0.9, 0, 0);
         triangles.mode = GL_TRIANGLES;
 
@@ -168,7 +130,6 @@ class FootprintRenderer  {
 			trf.rot=data.trf.rot = 0;
 			trf.pos=sh.pos;
             if (sh.type == ShapeType.Rectangle && sh.xy.x < sh.xy.y) {
-            //    rot = 3.14 / 2; //data.rot=
 				trf.rot+= 3.14 / 2;
             }
             data.trf.scale =min(sh.xy.x, sh.xy.y);
@@ -185,11 +146,7 @@ class FootprintRenderer  {
     }
 
     void removeFootprint(Data d) {
-       // Something.remove(d.background);
-       // Something.remove(d.triangles);
         Circles.remove(d.r);
-       // Something.remove(d.lines);
-       // Something.remove(d.points);
 		d.group.destroy();
         foreach (i, dddd; datas) {
             auto m = dddd.r;
@@ -204,11 +161,7 @@ class FootprintRenderer  {
     void addToDraw(RenderList list) {
         foreach (i, d; datas) {
 			list.add(d.group, Priority(18));
-            //list.add(d.background, Priority(17));
-            //list.add(d.triangles, Priority(19));
             list.add(d.r, Priority(20));
-            //list.add(d.lines, Priority(20));
-           // list.add(d.points, Priority(21));
             foreach (tt; d.texts)
                 list.add(tt.text, Priority(22));
 

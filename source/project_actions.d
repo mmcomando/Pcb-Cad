@@ -70,7 +70,7 @@ void addFootprint(PcbProject proj, vec2 globalMousePos) {
                 proj.actions.add(new RemoveFootprint(proj, f));
             } else if (gameEngine.window.keyPressed('t')) {
 				Transform after=f.trf;
-				after.rot=+ PI_4;
+				after.rot+=PI_4;
                 proj.actions.add(new TransformFootprint(f, f.trf, after));
             }
         }
@@ -121,7 +121,7 @@ private string traceCollideWithSomethingInProject(PcbProject proj, Trace trace, 
     }
     return "";
 }
-
+/// Moves last point in trace
 void addTrace(PcbProject proj, vec2 globalMousePos) {
     if (tmpTrace is null) {
         if (gameEngine.window.keyPressed('l')) {
@@ -181,6 +181,7 @@ void addTrace(PcbProject proj, vec2 globalMousePos) {
     }
 }
 
+/// Moves last two points in trace
 void addTraceDifferent(PcbProject proj, vec2 globalMousePos) {
     static bool normal;
     if (tmpTrace is null) {
@@ -202,7 +203,6 @@ void addTraceDifferent(PcbProject proj, vec2 globalMousePos) {
         if (gameEngine.window.keyPressed('l')) {
             tmpTrace.points ~= globalMousePos;
             vec2 dt02 = tmpTrace.points[$ - 3] - tmpTrace.points[$ - 1];
-            writeln(dt02);
             float tg01 = sqrt((dt02.y * dt02.y) / (dt02.x * dt02.x));
             if (tg01 < 0.3773 || tg01 > 2.7320) { //90 degree
                 normal = true;

@@ -6,6 +6,13 @@ import cerealed.cerealiser;
 import cerealed.decerealiser;
 import cerealed.traits;
 
+//TODO this module
+//Idea auto serialize whole Project and if there is breaking change save old Project structure load it and convert to newer version, may work may not will see after implementation
+
+
+
+//Test if it is posible to implement this module using cerealed, seems to be
+//but cerealed uses is very restricted format, any change will be breaking change, so maybe write own serializer(which will guarantee compatibility if type and name of members are the same)
 unittest {
     struct Test {
         string name;
