@@ -50,24 +50,28 @@ void updateTrace(PcbProject proj, vec2 globalMousePos) {
 }
 
 void addFootprint(PcbProject proj, vec2 globalMousePos) {
-    static vec2 from;
+    static Transform before;
     if (grabbed !is null) {
-        grabbed.pos = globalMousePos + grabbedDT;
+		Transform tmp=grabbed.trf;
+		tmp.pos=globalMousePos + grabbedDT;
+		grabbed.trf=tmp;
         if (gameEngine.window.mouseButtonReleased(MouseButton.left) || gameEngine.window.keyPressed('m')) {
-            proj.actions.add(new MoveFootprint(grabbed, from, grabbed.pos));
+            proj.actions.add(new TransformFootprint(grabbed, before, grabbed.trf));
             grabbed = null;
         }
     } else {
         if (Footprint f = proj.getFootprint(globalMousePos)) {
             if (gameEngine.window.mouseButtonPressed(MouseButton.left) || gameEngine.window.keyPressed('m')) {
-                grabbedDT = f.pos - globalMousePos;
-                from = f.pos;
+                grabbedDT = f.trf.pos - globalMousePos;
+                before = f.trf;
                 grabbed = f;
             } else if (gameEngine.window.keyPressed('r')) {
                 //removeFootprint(i);
                 proj.actions.add(new RemoveFootprint(proj, f));
             } else if (gameEngine.window.keyPressed('t')) {
-                proj.actions.add(new RotateFootprint(f, f.rot, f.rot + PI_4));
+				Transform after=f.trf;
+				after.rot=+ PI_4;
+                proj.actions.add(new TransformFootprint(f, f.trf, after));
             }
         }
 
@@ -80,7 +84,9 @@ void addFootprint(PcbProject proj, vec2 globalMousePos) {
             if (ff.length > 0) {
                 Footprint f = new Footprint(ff[0]);
                 //footprints ~= f;
-                f.pos = globalMousePos;
+				Transform tmp=f.trf;
+				tmp.pos=globalMousePos;
+                f.trf = tmp;
                 proj.addFootprint(f);
                 grabbed = f;
                 grabbedDT = vec2(0, 0);
@@ -295,7 +301,7 @@ void drawTmpTrace() {
         if (traceRend !is null)
             Something.remove(traceRend);
         traceRend = Something.fromPoints(tmpTrace.getTrianglePoints);
-        traceRend.pos = vec2(0, 0);
+		traceRend.trf.pos = vec2(0, 0);
         traceRend.color = vec3(1, 0, 0);
         traceRend.mode = GL_TRIANGLES;
         gameEngine.renderer.renderList.add(traceRend, Priority(10));

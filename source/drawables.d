@@ -19,11 +19,12 @@ import shaders;
 //TODO this objects are using allocators with fixed memory size (too many objects and there will be exception :/)
 
 //// Draw lines, triangles with color
-class Something : Drawable {
+final class Something : Drawable {
     GpuMemory data;
-    vec2 pos = vec2(0, 0);
+	Transform trf;
+    /*vec2 pos = vec2(0, 0);
     vec2 scale = vec2(1, 1);
-    float rot = 0;
+    float rot = 0;*/
     vec3 color = vec3(0, 0, 0);
     GLenum mode = GL_TRIANGLES;
 
@@ -44,7 +45,8 @@ class Something : Drawable {
         auto tmp = SomethingProgram.get;
         glBindVertexArray(vao);
         glUniform3f(tmp.color, color.x, color.y, color.z);
-        gameEngine.renderer.setModelMatrix(getModelMatrix(this));
+		//gameEngine.renderer.setModelMatrix(getModelMatrix(this));
+		gameEngine.renderer.setModelMatrix(trf.toMatrix);
         glDrawArrays(mode, data.start / vec2.sizeof, (data.end - data.start) / vec2.sizeof);
     }
 
@@ -73,15 +75,89 @@ class Something : Drawable {
     private static uint vao;
 }
 
+//// Draw lines, triangles with color
+final class SomethingNoTransform : Drawable {
+	GpuMemory data;
+	vec3 color = vec3(0, 0, 0);
+	GLenum mode = GL_TRIANGLES;
+	
+	void onBind() {
+		auto tmp = SomethingProgram.get;
+		tmp.shader.bind();
+		glUniformBlockBinding(tmp.shader.program, tmp.renderData, 2);
+		glUniformBlockBinding(tmp.shader.program, tmp.renderData2, 3);
+	}
+	
+	void onUnbind() {
+		auto tmp = SomethingProgram.get;
+		glBindVertexArray(0);
+		tmp.shader.unbind();
+	}
+	
+	void draw() {
+		auto tmp = SomethingProgram.get;
+		glBindVertexArray(Something.vao);
+		glUniform3f(tmp.color, color.x, color.y, color.z);
+		glDrawArrays(mode, data.start / vec2.sizeof, (data.end - data.start) / vec2.sizeof);
+	}
+	
+	static SomethingNoTransform fromPoints(in vec2[] points) {
+		GpuMemory m = gameEngine.renderer.verticesAllocator.allocate(points.length * vec2.sizeof);
+		m.write(points);
+		SomethingNoTransform meta = new SomethingNoTransform;
+		meta.data = m;
+		return meta;
+	}
+	
+	static void remove(SomethingNoTransform sm) {
+		gameEngine.renderer.verticesAllocator.deallocate(sm.data);
+	}
+}
+///Group of SomethingNoTransform
+final class Group : Drawable {
+	Transform trf;
+	private SomethingNoTransform[] drawables;
+
+	void add(SomethingNoTransform obj){
+		drawables~=obj;
+	}
+	void remove(SomethingNoTransform obj){
+		drawables.removeElementInPlace(obj);
+	}
+	// :]
+	void destroy(){
+		foreach(d;drawables)SomethingNoTransform.remove(d);
+	}
+	void onBind() {}
+	
+	void onUnbind() {}
+	
+	void draw() {
+		if(drawables.length==0)return;
+		writeln(trf);
+		gameEngine.renderer.setModelMatrix(trf.toMatrix);
+		drawables[0].onBind();
+		foreach(d;drawables){
+			d.onBind();
+			d.draw();
+			d.onUnbind();
+		}
+		drawables[0].onUnbind();
+
+
+	}
+}
+
 //// TEXT
 
 private enum vec2i texSize = vec2i(1024, 512);
 
-static class Text : Drawable {
+final class Text : Drawable {
     GpuMemory data;
-    vec2 pos = vec2(0, 0);
+	Transform trf;
+    /*vec2 pos = vec2(0, 0);
     vec2 scale = vec2(1, 1);
-    float rot = -3.14f / 4f;
+    float rot = -3.14f / 4f;*/
     vec3 color = vec3(0, 0, 1);
 
     void onBind() {
@@ -106,8 +182,9 @@ static class Text : Drawable {
     void draw() {
         auto tmp = TextProgram.get;
         glBindVertexArray(vao);
-        glUniform3f(tmp.color, color.x, color.y, color.z);
-        gameEngine.renderer.setModelMatrix(getModelMatrix(this));
+		glUniform3f(tmp.color, color.x, color.y, color.z);
+        gameEngine.renderer.setModelMatrix(trf.toMatrix);
+		//gameEngine.renderer.setModelMatrix(fin.toMatrix);
         glDrawArrays(GL_TRIANGLES, data.start / (vec2.sizeof * 2), (data.end - data.start) / (vec2.sizeof * 2));
     }
 
@@ -263,11 +340,12 @@ private:
  * Requires Text init()
  * changes GpuMemory internals to meet actual string size
  */
-class DynamicText : Drawable {
+final class DynamicText : Drawable {
     GpuMemory data;
-    vec2 pos = vec2(0, 0);
+	Transform trf;
+    /*vec2 pos = vec2(0, 0);
     vec2 scale = vec2(1, 1);
-    float rot = 0;
+    float rot = 0;*/
     vec3 color = vec3(0, 1, 1);
 
     private size_t size; //actual string size
@@ -319,14 +397,14 @@ class DynamicText : Drawable {
         auto tmp = TextProgram.get;
         glBindVertexArray(Text.vao);
         glUniform3f(tmp.color, color.x, color.y, color.z);
-        gameEngine.renderer.setModelMatrix(getModelMatrix(this));
+        gameEngine.renderer.setModelMatrix(trf.toMatrix);
         glDrawArrays(GL_TRIANGLES, data.start / (vec2.sizeof * 2), cast(uint) size * 6);
     }
 }
 
 ////Circles
 
-class Circles : Drawable {
+final class Circles : Drawable {
     static struct CircleData {
         vec3 color;
         vec2 pos;
@@ -334,9 +412,10 @@ class Circles : Drawable {
     }
 
     GpuMemory data;
-    vec2 pos = vec2(0, 0);
+	Transform trf;
+    /*vec2 pos = vec2(0, 0);
     vec2 scale = vec2(1, 1);
-    float rot = 0;
+    float rot = 0;*/
     bool filled = false;
     void onBind() {
         auto tmp = CirclesInstancedProgram.get;
@@ -355,8 +434,8 @@ class Circles : Drawable {
     void draw() {
         auto tmp = CirclesInstancedProgram.get;
         glBindVertexArray(vao);
-        gameEngine.renderer.setModelMatrix(getModelMatrix(this));
-        glUniform2f(tmp.everythingPos, pos.x, pos.y);
+        gameEngine.renderer.setModelMatrix(trf.toMatrix);
+        glUniform2f(tmp.everythingPos, trf.pos.x, trf.pos.y);
         uint instancesStart = data.start;
         uint instancesCount = (data.end - data.start) / CircleData.sizeof;
         glBindBuffer(GL_ARRAY_BUFFER, metaAllocator.vbo);

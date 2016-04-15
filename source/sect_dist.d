@@ -69,36 +69,8 @@ pos_val mulv(pos_t a, pos_t p) {
 }
 
 alias pos_t = vec2;
-/*class pos_t {
-public:
-	pos_val x,y;
-	pos_t() {}
-	pos_t(pos_val _x,pos_val _y) {x=_x;y=_y;}
-	pos_t operator+( pos_t p ) {
-		pos_t r(x+p.x,y+p.y);
-		return r;
-	}
-	pos_t operator-( pos_t p ) {
-		pos_t r(x-p.x,y-p.y);
-		return r;
-	}
-	pos_t operator-() {
-		pos_t r(-x,-y);
-		return r;
-	}
-	pos_val operator*( pos_t p ) {
-		return x*p.x+y*p.y;
-	}
-	pos_val mulv( pos_t p ) {
-		return x*p.y-y*p.x;
-	}
-	pos_val length_squared() {
-		return x*x+y*y;
-	}
-};*/
 
 struct sect {
-public:
     pos_t A, B;
     pos_t v() {
         return B - A;
@@ -168,11 +140,30 @@ pos_val[2] sect_dist_nxt(sect s1, sect s2, pos_val prev_ret) {
 
     return [min_ss(prev_ret, dd), rr];
 }
+unittest {
+	sect[2][] sectsToCollide = [
+		[sect(pos_t(0, -10), pos_t(0, 10)), sect(pos_t(-10, 0), pos_t(10, 0))],
+	];
+	sect[2][] sectsNotToCollide = [
+		[sect(pos_t(0, -10), pos_t(0, -5)), sect(pos_t(-10, 0), pos_t(10, 0))],
+		[sect(pos_t(0, -10), pos_t(0, -5)), sect(pos_t(4, -10), pos_t(4, -5))],
+		[sect(pos_t(0, 10), pos_t(0, 5)), sect(pos_t(0, 3), pos_t(0, 1))],
+	];
+	
+	foreach (i, sects;sectsToCollide) {
+		float qLength=sect_dist_nxt( sects[0], sects[1], 100)[0];
+		assert(qLength<0.0001);
+	}
+	foreach (i, sects;sectsNotToCollide) {
+		float qLength=sect_dist_nxt( sects[0], sects[1], 100)[0];
+		assert(qLength>0.0001);
+	}
+}
 //benchmark
 int test() {
     float result = 7;
     float am = 8;
-    for (ulong i = 0; i < 1000 * 1000 * 1000; i++) {
+    for (ulong i = 0; i < 1000 * 1000 * 10; i++) {
         if (i == 10000)
             am *= 32; //don't  optimize away
         sect s1 = sect(pos_t(0, 0), pos_t(0, uniform(0f, 600f)));

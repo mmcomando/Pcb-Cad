@@ -16,24 +16,20 @@ import utils;
 import objects;
 import drawables;
 
-class FootprintRenderer : Drawable {
+class FootprintRenderer  {
     alias PosAllocator = GpuChunkAllocator!GL_ARRAY_BUFFER;
     alias MetaAllocator = GpuChunkAllocator!GL_ARRAY_BUFFER;
     PosAllocator vertexAllocator;
 
     static struct TextPos {
         Text text;
-        vec2 pos;
-        float rot = 0;
+		Transform trf;
     }
 
     static class Data {
-        void pos(vec2 p) {
+        /*void pos(vec2 p) {
             _pos = p;
-            lines.pos = p;
-            points.pos = p;
-            triangles.pos = p;
-            background.pos = p;
+			group.trf.pos=pos;
             r.pos = p;
             foreach (tt; texts)
                 tt.text.pos = rotateVector(tt.pos, rot) + pos; //pos+tt.pos;
@@ -45,10 +41,7 @@ class FootprintRenderer : Drawable {
 
         void rot(float r) {
             _rot = r;
-            lines.rot = r;
-            points.rot = r;
-            triangles.rot = r;
-            background.rot = r;
+			group.trf.rot=r;
             this.r.rot = r;
             foreach (tt; texts) {
                 tt.text.rot = r + tt.rot;
@@ -58,17 +51,36 @@ class FootprintRenderer : Drawable {
 
         float rot() {
             return _rot;
-        }
+        }*/
+		void trf(Transform t) {
+			_trf = t;
+			group.trf=t;
+			r.trf=t;
+			foreach (tt; texts) {
+				tt.trf=_trf*tt.trf;
+				/*tt.text.rot = r + tt.rot;
+				tt.text.pos = rotateVector(tt.pos, rot) + pos;*/
+			}
+		}
+		
+		const(Transform) trf() {
+			return _trf;
+		}
+		this(){
+			group=new Group();
+		}
 
     private:
-        Something lines;
-        Something points;
-        Something triangles;
-        Something background;
+        /*Something lines;
+		Something points;
+		Something triangles;
+		Something background;*/
+		Group group;
         TextPos[] texts;
         Circles r;
-        vec2 _pos;
-        float _rot;
+        //vec2 _pos;
+        //float _rot;
+		Transform _trf;
     }
 
     Data[] datas;
@@ -77,6 +89,10 @@ class FootprintRenderer : Drawable {
     }
 
     Data addFootprint(Footprint footprint) {
+		SomethingNoTransform lines;
+		SomethingNoTransform points;
+		SomethingNoTransform triangles;
+		SomethingNoTransform background;
         const FootprintData f = footprint.f;
         Data d = new Data;
         vec2[2] b = f.boundingBox;
@@ -84,10 +100,10 @@ class FootprintRenderer : Drawable {
         vec2 v2 = b[1];
         vec2 v3 = vec2(b[1].x, b[0].y);
         vec2 v4 = b[0];
-        d.background = Something.fromPoints([v1, v2, v4, v4, v2, v3]);
-        d.background.pos = footprint.pos;
-        d.background.color = vec3(0.8, 0.8, 0.8);
-        d.background.mode = GL_TRIANGLES;
+        background = SomethingNoTransform.fromPoints([v1, v2, v4, v4, v2, v3]);
+        //background.pos = footprint.pos;
+        background.color = vec3(0.8, 0.8, 0.8);
+        background.mode = GL_TRIANGLES;
         foreach (ref p; f.points) {
         }
         foreach (ref a; f.arcs) {
@@ -99,15 +115,15 @@ class FootprintRenderer : Drawable {
             rendLines ~= l[0];
             rendLines ~= l[1];
         }
-        d.lines = Something.fromPoints(rendLines);
-        d.lines.pos = footprint.pos;
-        d.lines.color = vec3(0, 1, 1);
-        d.lines.mode = GL_LINES;
+		lines = SomethingNoTransform.fromPoints(rendLines);
+        //lines.pos = footprint.pos;
+        lines.color = vec3(0, 1, 1);
+        lines.mode = GL_LINES;
 
-        d.points = Something.fromPoints(f.points);
-        d.points.pos = footprint.pos;
-        d.points.color = vec3(0, 1, 0);
-        d.points.mode = GL_POINTS;
+		points = SomethingNoTransform.fromPoints(f.points);
+        //points.pos = footprint.pos;
+        points.color = vec3(0, 1, 0);
+        points.mode = GL_POINTS;
         Circles.CircleData[] metas;
         foreach (ref c; f.circles) {
             metas ~= Circles.CircleData(vec3(0, 0, 1), c.pos, c.radius);
@@ -133,42 +149,48 @@ class FootprintRenderer : Drawable {
                 break;
             }
         }
-        d.triangles = Something.fromPoints(trianglePoints);
+		triangles = SomethingNoTransform.fromPoints(trianglePoints);
         d.r = Circles.addCircles(metas);
-        d.r.pos = footprint.pos;
-        d.triangles.pos = footprint.pos;
-        d.triangles.rot = footprint.rot;
-        d.triangles.color = vec3(0.9, 0, 0);
-        d.triangles.mode = GL_TRIANGLES;
+        d.r.trf =footprint.trf;
+        //triangles.pos = footprint.pos;
+        //triangles.rot = footprint.rot;
+        triangles.color = vec3(0.9, 0, 0);
+        triangles.mode = GL_TRIANGLES;
 
         foreach (name, pad; lockstep(footprint.padConnections, f.pads)) {
-            float rot;
+			Transform trf;
+            
             if (name == "?" || name == "")
                 continue;
             auto data = Text.fromString(name);
-            data.pos = footprint.pos;
-            rot = data.rot = 0;
-            Shape sh = footprint.f.shapes[pad.shapeID];
+			Shape sh = footprint.f.shapes[pad.shapeID];
+            data.trf=footprint.trf;
+			trf.rot=data.trf.rot = 0;
+			trf.pos=sh.pos;
             if (sh.type == ShapeType.Rectangle && sh.xy.x < sh.xy.y) {
-                rot = 3.14 / 2; //data.rot=
+            //    rot = 3.14 / 2; //data.rot=
+				trf.rot+= 3.14 / 2;
             }
-            data.scale = vec2(1, 1) * min(sh.xy.x, sh.xy.y);
-            d.texts ~= TextPos(data, sh.pos, rot);
+            data.trf.scale =min(sh.xy.x, sh.xy.y);
+            d.texts ~= TextPos(data,trf);
 
         }
 
         datas ~= d;
-        d.pos = footprint.pos;
-        d.rot = footprint.rot;
+		d.group.add(background);
+		d.group.add(triangles);
+		d.group.add(lines);
+		d.group.add(points);
         return d;
     }
 
     void removeFootprint(Data d) {
-        Something.remove(d.background);
-        Something.remove(d.triangles);
+       // Something.remove(d.background);
+       // Something.remove(d.triangles);
         Circles.remove(d.r);
-        Something.remove(d.lines);
-        Something.remove(d.points);
+       // Something.remove(d.lines);
+       // Something.remove(d.points);
+		d.group.destroy();
         foreach (i, dddd; datas) {
             auto m = dddd.r;
             if (dddd == d) {
@@ -181,31 +203,19 @@ class FootprintRenderer : Drawable {
 
     void addToDraw(RenderList list) {
         foreach (i, d; datas) {
-            list.add(d.background, Priority(17));
-            list.add(d.triangles, Priority(19));
+			list.add(d.group, Priority(18));
+            //list.add(d.background, Priority(17));
+            //list.add(d.triangles, Priority(19));
             list.add(d.r, Priority(20));
-            list.add(d.lines, Priority(20));
-            list.add(d.points, Priority(21));
+            //list.add(d.lines, Priority(20));
+           // list.add(d.points, Priority(21));
             foreach (tt; d.texts)
                 list.add(tt.text, Priority(22));
 
         }
     }
 
-    void onBind() {
-    }
 
-    void onUnbind() {
-    }
-
-    void draw() {
-        foreach (i, d; datas) {
-            d.r.onBind();
-            d.r.draw();
-            d.r.onUnbind();
-        }
-
-    }
 
 }
 
@@ -267,8 +277,8 @@ class GridDraw : Drawable {
             }
 
             meta = Something.fromPoints(gridLines);
-            meta.pos = pos;
-            meta.rot = 0;
+            meta.trf.pos = pos;
+			meta.trf.rot = 0;
             meta.color = vec3(0.75, 0.75, 0.75);
             meta.mode = GL_LINES;
 

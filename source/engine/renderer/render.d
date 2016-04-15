@@ -78,10 +78,12 @@ public:
     GLuint projectionBindingPoint = 2;
     GLuint modelBindingPoint = 3;
     Camera camera = Camera(vec2(640, 480), vec2(0, 0), 0.5);
-    RenderList renderList;
+	RenderList renderList;
+	RenderList guiRenderList;
     void init() {
         verticesAllocator = new Allocator;
-        renderList = new RenderList;
+		renderList = new RenderList;
+		guiRenderList = new RenderList;
         const char* ver = glGetString(GL_VERSION);
         const char* ver2 = glGetString(GL_SHADING_LANGUAGE_VERSION);
         writeln("opengl version: ", *ver);
@@ -107,6 +109,15 @@ public:
         renderList.sort();
         renderList.draw();
         renderList.reset();
+
+		Camera guiCamera=camera;
+		guiCamera.pos=vec2(0,0);
+		guiCamera.zoom=0.5;
+		projection = buildProjectionMatrix(guiCamera);
+		setProjectionMatrix(projection);
+		guiRenderList.sort();
+		guiRenderList.draw();
+		guiRenderList.reset();
     }
 
     void setProjectionMatrix(mat4 mat) {

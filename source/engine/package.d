@@ -82,8 +82,6 @@ class Engine {
             fps = frames / fpsTimer;
             fpsTimer -= 1;
             frames = 0;
-
-            writefln("%5.3f (%5.2fms, %5.2fms)", fps, minTime * 1000, maxTime * 1000);
             GC.collect();
         }
 

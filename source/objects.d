@@ -151,7 +151,7 @@ void displayConnections(PcbProject proj) {
         static vec2 getPos(T)(T a) {
             Footprint f = a.footprint;
             vec2 padPos = f.f.shapes[f.f.pads[a.padNum].shapeID].pos;
-            return rotateVector(padPos, f.rot) + a.footprint.pos;
+            return rotateVector(padPos, f.trf.rot) + a.footprint.trf.pos;
         }
         //auto padPoints=conn.pads.map!(a=>a.footprint.f.shapes[a.footprint.f.pads[a.padNum].shapeID].pos+a.footprint.pos)();
         auto padPoints = conn.pads.map!getPos();
@@ -210,8 +210,8 @@ void displayConnections(PcbProject proj) {
     }
     drawLines = Something.fromPoints(lines);
     drawLines.mode = GL_LINES;
-    drawLines.pos = vec2(0, 0);
-    drawLines.rot = 0;
+	drawLines.trf.pos = vec2(0, 0);
+	drawLines.trf.rot = 0;
     drawLines.color = vec3(1, 0, 1);
     somethingAutoRender = somethingAutoRender ~= drawLines;
 
@@ -242,8 +242,8 @@ void displayTraceConnections(PcbProject proj) {
     }
     drawLines = Something.fromPoints(lines);
     drawLines.mode = GL_LINES;
-    drawLines.pos = vec2(0, 0);
-    drawLines.rot = 0;
+	drawLines.trf.pos = vec2(0, 0);
+	drawLines.trf.rot = 0;
     drawLines.color = vec3(0.3, 0.5, 0);
     somethingAutoRender = somethingAutoRender ~= drawLines;
 
@@ -309,7 +309,7 @@ class PcbProject {
         foreach (f; footprints) {
             vec2[] points = f.f.snapPoints.dup;
             foreach (ref p; points)
-                p += f.pos;
+                p += f.trf.pos;
             snapPoints ~= points;
         }
         return snapPoints;
@@ -334,26 +334,26 @@ class PcbProject {
     }
 }
 
-class MoveFootprint : Action {
-    vec2 from;
-    vec2 to;
+class TransformFootprint : Action {
+    Transform before;
+	Transform after;
     Footprint footprint;
-    this(Footprint ft, vec2 from, vec2 to) {
+	this(Footprint ft, Transform before, Transform after) {
         footprint = ft;
-        this.from = from;
-        this.to = to;
+        this.before = before;
+        this.after = after;
     }
 
     void doAction() {
-        footprint.pos = to;
+        footprint.trf = after;
     }
 
     void undoAction() {
-        footprint.pos = from;
+        footprint.trf = before;
     }
 
 }
-
+/*
 class RotateFootprint : Action {
     float from;
     float to;
@@ -372,7 +372,7 @@ class RotateFootprint : Action {
         footprint.rot = from;
     }
 
-}
+}*/
 
 class RemoveFootprint : Action {
     PcbProject project;
@@ -409,9 +409,9 @@ class Trace {
             metas ~= Circles.CircleData(vec3(1, 0, 0), p, traceWidth / 2);
         }
         rendWheels = Circles.addCircles(metas, true);
-        rendWheels.pos = vec2(0, 0);
+        rendWheels.trf.pos = vec2(0, 0);
         rendPoints = Something.fromPoints(trianglePoints);
-        rendPoints.pos = vec2(0, 0);
+		rendPoints.trf.pos = vec2(0, 0);
         rendPoints.color = vec3(1, 0, 0);
         rendPoints.mode = GL_TRIANGLES;
     }
@@ -460,12 +460,13 @@ class Footprint {
     FootprintRenderer.Data rendData;
 
     const FootprintData f;
-    private vec2 _pos = vec2(0, 0);
-    private float _rot = 0;
+   /*private vec2 _pos = vec2(0, 0);
+    private float _rot = 0;*/
+	Transform _trf;
     string name;
     string[] padConnections;
 
-    @property vec2 pos() {
+	/* @property vec2 pos() {
         return _pos;
     }
 
@@ -482,7 +483,15 @@ class Footprint {
     @property void rot(float r) {
         if (rendData !is null)
             rendData.rot = _rot = r; //bug
-    }
+    }*/
+	void trf(Transform t) {
+		_trf = t;
+		rendData.trf=t;
+	}
+	
+	const(Transform) trf() {
+		return _trf;
+	}
 
     this(FootprintData f) {
         if (rend is null)
@@ -514,8 +523,8 @@ class Footprint {
 
     //TODO rotation
     bool collide(vec2 point) {
-        vec2 minn = pos + f.boundingBox[0];
-        vec2 maxx = pos + f.boundingBox[1];
+        vec2 minn = trf.pos + f.boundingBox[0];
+        vec2 maxx = trf.pos + f.boundingBox[1];
         if (point.x > minn.x && point.y > minn.y && point.x < maxx.x && point.y < maxx.y) {
             return true;
         }
