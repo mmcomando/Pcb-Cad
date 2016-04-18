@@ -2,6 +2,7 @@ module run;
 
 import core.memory;
 import std.stdio : writeln, writefln;
+import std.algorithm : min,max;
 
 import gl3n.linalg;
 import derelict.opengl3.gl3;
@@ -40,7 +41,7 @@ void init() {
 	Circles.init();
 	Text.init();
 	dText = new DynamicText(100);
-	dText.trf=Transform(vec2(0,0),0,10);
+	dText.trf=Transform(vec2(20,-20),0,10);
 	dText.color=vec3(0,0,0);
 
 	testText = Text.fromString("adfghALSJIDb asdasud7asud,a896412';][;/.\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';");
@@ -139,12 +140,12 @@ void run() {
 	// -- Add,delete footprint. Add,delete trace
 	project.update(snapPoint);
 	if (gameEngine.window.keyDown('=')) {
-		traceWidth += camZoomSpeed / 4;
-		project.grid.size += vec2(1, 1) * camZoomSpeed / 4;
+		traceWidth = min(0.01,traceWidth+camZoomSpeed / 4000) ;
+		project.grid.size = vec2(1,1)*traceWidth;
 	}
 	if (gameEngine.window.keyDown('-')) {
-		traceWidth -= camZoomSpeed / 4;
-		project.grid.size -= vec2(1, 1) * camZoomSpeed / 4;
+		traceWidth = max(0.00001,traceWidth-camZoomSpeed / 4000) ;
+		project.grid.size = vec2(1,1)*traceWidth;
 	}
 
 	// -- Back support
@@ -179,16 +180,16 @@ void run() {
 		dText.set(sss);
 	}
 	displayConnections(project);
-	 Footprint.rend.addToDraw(renderer.renderList);
-	 drawTmpTrace();
-	  project.grid.addToDraw(renderer.renderList);
-	 foreach (tr; project.traces)
-	     tr.addToDraw(renderer.renderList);
+	Footprint.rend.addToDraw(renderer.renderList);
+	drawTmpTrace();
+	project.grid.addToDraw(renderer.renderList);
+	foreach (tr; project.traces)
+		tr.addToDraw(renderer.renderList);
 	//renderer.renderList.add(centralCircle, Priority(250));
-	 //renderer.renderList.add(cursor, Priority(250));
+	//renderer.renderList.add(cursor, Priority(250));
 	//renderer.renderList.add(testText, Priority(251));
-	 renderer.guiRenderList.add(dText, Priority(251));
-	 foreach (sm; somethingAutoRender)
-	  renderer.renderList.add(sm, Priority(200));
+	renderer.guiRenderList.add(dText, Priority(251));
+	foreach (sm; somethingAutoRender)
+		renderer.renderList.add(sm, Priority(200));
 	renderer.draw();
 }

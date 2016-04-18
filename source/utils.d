@@ -171,12 +171,13 @@ bool traceCollide(Trace a, Trace b, ref vec2[2] closestPoints) {
 	float qLengthCollide = (a.traceWidth + b.traceWidth) * (a.traceWidth + b.traceWidth);
 	foreach (lineA; linesATrace) {
 		foreach (lineB; linesBTrace) {
-			float qLength=linesColide(lineA,lineB);
+			//float qLength=linesColide(lineA,lineB);
 			//float qLength = sect_dist_nxt(sect(lineA[0], lineA[1]), sect(lineB[0], lineB[1]), 100)[0];
-			if (qLength < qLengthCollide) {
+			float[2] qLength = sect_dist_nxt(sect(lineA[0], lineA[1]), sect(lineB[0], lineB[1]), 100);
+			if (qLength[1] ==0) {
 				return true;
-			} else if (qLength < minLength) {
-				minLength = qLength;
+			} else if (qLength[1] < minLength) {
+				minLength = qLength[1];
 				closestPoints = [lineA[0], lineB[0]];
 			}
 		}
@@ -207,7 +208,8 @@ bool traceCollideWithPoint(Trace trace, vec2 point) {
 bool traceCollideWithPad(Trace trace, Footprint footprint, uint shapeID) {
 	Shape shape = footprint.f.shapes[shapeID];
 	vec2 point = footprint.trf.pos + rotateVector(shape.pos, footprint.trf.rot);
-	float minDistance = trace.traceWidth + min(shape.xy.x, shape.xy.y);
+	float minDistance =min(shape.xy.x, shape.xy.y);
+	minDistance=minDistance*minDistance+trace.traceWidth*trace.traceWidth;
 	for (int i = 1; i < trace.points.length; i++) {
 		float qLength = minimum_distance(trace.points[i - 1], trace.points[i], point);
 		if (qLength < minDistance) {

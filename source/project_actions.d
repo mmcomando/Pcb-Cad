@@ -24,10 +24,13 @@ Trace[] traces;
 bool snapEnabled = true;
 Footprint grabbed;
 Something traceRend;
-float traceWidth = 1;
+float traceWidth = 0.001;
 
 vec2 grabbedDT;
 void update(PcbProject proj, vec2 globalMousePos) {
+	if (tmpTrace !is null) {
+		tmpTrace.traceWidth=traceWidth;
+	}
     snapEnabled = true;
     if (grabbed !is null || tmpTrace !is null)
         snapEnabled = false;
@@ -239,6 +242,7 @@ void addTraceDifferent(PcbProject proj, vec2 globalMousePos) {
 
     if (gameEngine.window.keyPressed('k') && tmpTrace !is null) {
         string connName = traceCollideWithSomethingInProject(proj, tmpTrace, tmpTrace.connection);
+		writeln(tmpTrace.connection, " vs ", connName);
 
         if (connName.empty || connName == tmpTrace.connection) {
             proj.addTrace(tmpTrace);

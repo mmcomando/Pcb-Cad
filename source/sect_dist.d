@@ -94,7 +94,7 @@ pos_val[2] sect_dist_spd(sect s1, sect s2) {
         min_ss(vb1a2.length_squared(), vb1b2.length_squared()));
     return [min_quad_dist, r];
 }
-
+///first return value is distance beetween lines, second is zero if they are colliding
 pos_val[2] sect_dist_nxt(sect s1, sect s2, pos_val prev_ret) {
     pos_t v1 = s1.v();
     pos_t v2 = s2.v();

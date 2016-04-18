@@ -185,7 +185,7 @@ class FootprintRenderer  {
 
 class GridDraw : Drawable {
     vec2 pos = vec2(0, 0);
-    vec2 dieSize = vec2(2000, 2000);
+    vec2 dieSize = vec2(0.2, 0.2);
     vec2 size = vec2(1, 1);
     Something meta;
     this() {
@@ -206,7 +206,7 @@ class GridDraw : Drawable {
     vec2 getDrawnSize() {
         vec2 v = gameEngine.renderer.camera.vectorSize(size) * 0.1;
         vec2i s2 = vec2i(cast(int)(1 / v.x), cast(int)(1 / v.y));
-        v = vec2(size.x * s2.x + 1, size.y * s2.y + 1);
+        v = vec2(size.x * s2.x, size.y * s2.y);
         if (size.x > v.x)
             v = size;
         return v;
