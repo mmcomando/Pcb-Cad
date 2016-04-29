@@ -459,10 +459,7 @@ enum PadType {
     THT
 }
 
-enum ShapeType {
-    Circle,
-    Rectangle
-}
+
 
 // Remove pad completely?? use traces, shapes, itd with some ID??
 struct Pad {
@@ -472,10 +469,56 @@ struct Pad {
     //uint wireID;
 }
 
+bool isShape(T)(){
+	//has collide, aabb
+	//no references
+	bool ok=__traits ( isPOD , T );
+	return ok;
+}
+
+bool typesExists(string[] types)(){
+	string getCode(string[] types)(){
+		string code;
+		foreach(typeStr;types){
+			code~="ok=ok && isShape!("~typeStr~");";
+		}
+		return code;
+	}
+	enum code=getCode!(types);
+	static if(!__traits ( compiles , mixin(code) )){
+		return false;
+	}else{
+		bool ok=true;
+		mixin(getCode!(types));
+		return ok;
+	}
+
+}
+string[] enumNames(Enum)(){
+	import std.traits,std.conv;
+	string[] arr;
+	foreach(Enum str;EnumMembers!Enum){
+		arr~=str.to!string;
+	}
+	return arr;
+	
+}
+bool typesInEnumExists(Enum)(){
+	return typesExists!(enumNames!(Enum));
+
+}
+enum ShapeType:ubyte {
+	Circle,
+	Rectangle
+}
+
+struct AnyShapeTemplate(EnumOfTypes) {
+	static assert(typesInEnumExists!EnumOfTypes,"All names of enum  have to have coresponding type existing");
+}
 struct Shape {
-    vec2 pos;
-    vec2 xy; ///For Circle size?, for Rectangle size
-    ShapeType type;
+	vec2 pos;
+	vec2 xy; ///For Circle size?, for Rectangle size
+	ShapeType type;
 }
 
 struct Copper {
@@ -524,6 +567,8 @@ class FootprintData {
     }
 
     vec2[2] computeBoundingBox() const {
+		bool ok=typesInEnumExists!(ShapeType);
+		AnyShapeTemplate!ShapeType bb;
         vec2 minn;
         vec2 maxx;
         if (points.length) {

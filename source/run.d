@@ -47,8 +47,9 @@ void init() {
 	testText = Text.fromString("adfghALSJIDb asdasud7asud,a896412';][;/.\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';\nSJIDb asdasud7asud,a896412';");
 	testText.trf.pos=vec2(0,0);
 	project = new PcbProject;
-	cursor = Circles.addCircles([Circles.CircleData(vec3(1, 0, 0), vec2(0, 0), 0.5)], true);
+	cursor = Circles.addCircles([Circles.CircleData(vec3(1, 0, 0), vec2(0, 0), 1)], true);
 	cursor.trf.pos = vec2(0, 0);
+	cursor.trf.scale = 0.001;
 
 	uint num = 7;
 	float n = num;
@@ -100,6 +101,7 @@ void run() {
 		project.snap(gameEngine.globalMousePos, snapPoint, minLength);
 		project.grid.snapPos(gameEngine.globalMousePos, snapPoint, minLength);
 		cursor.trf.pos = snapPoint;
+		cursor.trf.scale=0.5/renderer.camera.zoom;
 	}
 
 	float camPosDelta = gameEngine.dtf * 100 / renderer.camera.zoom;
@@ -186,7 +188,7 @@ void run() {
 	foreach (tr; project.traces)
 		tr.addToDraw(renderer.renderList);
 	//renderer.renderList.add(centralCircle, Priority(250));
-	//renderer.renderList.add(cursor, Priority(250));
+	renderer.renderList.add(cursor, Priority(250));
 	//renderer.renderList.add(testText, Priority(251));
 	renderer.guiRenderList.add(dText, Priority(251));
 	foreach (sm; somethingAutoRender)

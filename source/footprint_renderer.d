@@ -186,7 +186,7 @@ class FootprintRenderer  {
 class GridDraw : Drawable {
     vec2 pos = vec2(0, 0);
     vec2 dieSize = vec2(0.2, 0.2);
-    vec2 size = vec2(1, 1);
+    vec2 size = vec2(0.001, 0.001);
     Something meta;
     this() {
     }
