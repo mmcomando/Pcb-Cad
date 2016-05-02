@@ -1,31 +1,18 @@
 ﻿module shapes;
 
-import std.math : abs;
-import std.stdio : writeln;
-import std.algorithm : remove, min, max, find, map, joiner, each;
-import std.range : chain, empty, take;
-import std.traits,std.conv;
-import std.string:toLowerInPlace;
-import std.uni:toLower;
+
+import std.conv:to;
+import std.format:format;
 
 import gl3n.linalg;
 
 import utils;
 
 void test(){
-	writeln(AnyShape.getShapeCode!(Rectangle,Circle)(8));
 	AnyShape A,B;
-	Transform a,b;
-	AnyShapesCollide(a,b,A,B);
-	A.set!Circle(Circle());
-	Circle* cc=A.get!Circle;
-	//Rectangle* rr=A.get!Rectangle;
-	/*	mmm._int=123;
-	int* asd=mmm._int;
-	*asd=9999;
-	writeln(" | ",*mmm._int);
-	mmm.footprintData=new FootprintData();
-	writeln(" | ",mmm.footprintData);*/
+	A.set(Circle());
+	B.set(Rectangle());		
+	collide(&A,&B);
 }
 struct Triangle{
 	vec2 p1;
@@ -126,43 +113,9 @@ struct AnyShapeTemplate(Types...) {
 		}
 	}
 }
-
 alias AnyShape=AnyShapeTemplate!(Rectangle,Circle,Triangle);
-bool AnyShapesCollide(AnyShape shapeA,AnyShape shapeB){
-	string getCode(Types...)(){
-		string code="final switch(shapeA.currentType){\n";
-		foreach(i,typeA;Types){
-			code~="case "~i.to!string~":\n";
-			code~="final switch(shapeB.currentType){\n";
-			foreach(j,typeB;Types){
-				code~="  case "~j.to!string~":\n";
-				static if(__traits(compiles,collide(shapeA.get!typeA,shapeB.get!typeB))){
-					code~="  return collide(shapeA.get!"~typeA.stringof~",shapeB.get!"~typeB.stringof~");\n";
-				}else static if(__traits(compiles,collide(shapeB.get!typeB,shapeA.get!typeA))){
-					code~="  return collide(shapeB.get!"~typeB.stringof~",shapeA.get!"~typeA.stringof~");\n";
-				}else static if(__traits(compiles,collide(shapeA.get!typeA.getTriangles,shapeB.get!typeB))){
-					code~="  return collide(shapeA.get!"~typeA.stringof~".getTriangles,shapeB.get!"~typeB.stringof~");\n";
-				}else static if(__traits(compiles,collide(shapeA.get!typeA,shapeB.get!typeB.getTriangles))){
-					code~="  return collide(shapeA.get!"~typeA.stringof~",shapeB.get!"~typeB.stringof~".getTriangles);\n";
-				}else static if(__traits(compiles,collide(shapeA.get!typeA.getTriangles,shapeB.get!typeB.getTriangles))){
-					code~="  return collide(shapeA.get!"~typeA.stringof~".getTriangles,shapeB.get!"~typeB.stringof~".getTriangles);\n";
-				}else{
-					//code~="  assert(false);\n";
-				}
-				//code~="  break;\n";
-				
-			}
-			code~="  case AnyShape.types.none:return false;\n";
-			code~=" }\n";
-		}
-		code~="case AnyShape.types.none:return false;\n";
-		return code~"}\n";
-	}
-	
-	//writeln(getCode!(shapeA.FromTypes));
-	//return true;
-	mixin(getCode!(shapeA.FromTypes));
-}
+
+//Collision functions
 
 bool collideUniversal(T1,T2)(T1 a ,T2 b){	
 	return collide(a.getTriangles,b.getTriangles);
@@ -172,7 +125,6 @@ bool collide(AnyShape* sA,AnyShape* sB){
 	bool function(void*,void*)[Types.length*Types.length] getJumpTable(Types...)(){
 		bool function(void*,void*)[Types.length*Types.length] jumpTable;
 		AnyShape shapeA,shapeB;
-		import std.format:format;
 		string getCode(Types...)(){
 			string code;
 			foreach(i,typeA;Types){
