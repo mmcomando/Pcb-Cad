@@ -18,6 +18,7 @@ import project_actions;
 import shaders;
 import drawables;
 import sect_dist;
+import shapes:test;
 
 bool initialized = false;
 PcbProject project;
@@ -32,6 +33,9 @@ DynamicText dText;
 // connection nets from string to uint ID
 
 void init() {
+	test();
+
+
 	renderer = gameEngine.renderer;
 	renderer.init();
 	SomethingProgram.init();
