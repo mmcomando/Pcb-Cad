@@ -13,8 +13,7 @@ import sect_dist;
 
 
 
-vec2[] getPointsOnCircle(vec2 pos, float r) {
-	int segments = 64;
+vec2[] getPointsOnCircle(vec2 pos, float r,int segments=64) {
 	vec2[] points;
 	points.reserve(segments);
 	float delta = PI * 2 / (segments - 1);

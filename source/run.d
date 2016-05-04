@@ -18,7 +18,7 @@ import project_actions;
 import shaders;
 import drawables;
 import sect_dist;
-import shapes:test;
+import shapes:test,Rectangle,collide;
 
 bool initialized = false;
 PcbProject project;
@@ -27,13 +27,15 @@ Circles centralCircle;
 Circles cursor;
 Text testText;
 DynamicText dText;
+Something recDrawA,recDrawB;
+Rectangle recA,recB;
+bool isColliding=false;
 
 //TODO :
 //shapes <- very importatnt :/
 // connection nets from string to uint ID
 
 void init() {
-	test();
 
 
 	renderer = gameEngine.renderer;
@@ -53,7 +55,7 @@ void init() {
 	project = new PcbProject;
 	cursor = Circles.addCircles([Circles.CircleData(vec3(1, 0, 0), vec2(0, 0), 1)], true);
 	cursor.trf.pos = vec2(0, 0);
-	cursor.trf.scale = 0.001;
+	cursor.trf.scale = 0.0001;
 
 	uint num = 7;
 	float n = num;
@@ -64,6 +66,18 @@ void init() {
 	}
 	centralCircle = Circles.addCircles(ccc);
 	centralCircle.trf.pos = vec2(0, 0);
+
+
+	test();
+	recA.wh=vec2(0.004,0.004);
+	writeln(recA.getPoints);
+	recDrawA=Something.fromPoints(recA.getPoints);
+	recB.wh=vec2(0.02,0.002);
+	recDrawB=Something.fromPoints(recB.getPoints);
+	//recDrawB.trf.pos=vec2(0.002);
+	recDrawB.color=vec3(1,0,1);
+	writeln(recDrawA);
+
 
 	project.name = "test";
 	try {
@@ -87,6 +101,7 @@ void init() {
 	}
 
 	GC.disable();
+
 
 }
 
@@ -178,11 +193,18 @@ void run() {
 			gameEngine.renderer.camera.pos = grabPoint + dt;
 		}
 	}
+	if (gameEngine.window.keyPressed('b'))recDrawA.trf.rot+=3.14/8;
+	isColliding=collide(recDrawA.trf,recDrawB.trf,&recA,&recB);
+	if(collide(recDrawA.trf,&recA,gameEngine.globalMousePos)){
+		if(gameEngine.window.mouseButtonDown(MouseButton.right)){
+			recDrawA.trf.pos=gameEngine.globalMousePos;
+		}
+	}
 	{
 		import std.conv;
 		import std.format;
-		string sss = format("fps: %8.2f  %4.2fms %4.2fms\nx: %10.5f\ny: %10.5f",
-			gameEngine.fps,gameEngine.minTime * 1000, gameEngine.maxTime * 1000,gameEngine.globalMousePos.x,gameEngine.globalMousePos.y);
+		string sss = format("fps: %8.2f  %4.2fms %4.2fms\nx: %10.5f\ny: %10.5f\ncollide: %s",
+			gameEngine.fps,gameEngine.minTime * 1000, gameEngine.maxTime * 1000,gameEngine.globalMousePos.x,gameEngine.globalMousePos.y,isColliding);
 		dText.set(sss);
 	}
 	displayConnections(project);
@@ -191,8 +213,10 @@ void run() {
 	project.grid.addToDraw(renderer.renderList);
 	foreach (tr; project.traces)
 		tr.addToDraw(renderer.renderList);
-	//renderer.renderList.add(centralCircle, Priority(250));
+	renderer.renderList.add(centralCircle, Priority(250));
 	renderer.renderList.add(cursor, Priority(250));
+	renderer.renderList.add(recDrawA, Priority(240));
+	renderer.renderList.add(recDrawB, Priority(240));
 	//renderer.renderList.add(testText, Priority(251));
 	renderer.guiRenderList.add(dText, Priority(251));
 	foreach (sm; somethingAutoRender)

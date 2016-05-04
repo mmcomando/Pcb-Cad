@@ -1,8 +1,8 @@
 ﻿module shapes;
 
-
 import std.conv:to;
 import std.format:format;
+import std.array:uninitializedArray;
 
 import gl3n.linalg;
 
@@ -11,8 +11,9 @@ import utils;
 void test(){
 	AnyShape A,B;
 	A.set(Circle());
-	B.set(Rectangle());		
-	collide(&A,&B);
+	B.set(Rectangle());	
+	Transform trA, trB;
+	collide(trA,trB,&A,&B);
 }
 struct Triangle{
 	vec2 p1;
@@ -24,14 +25,35 @@ struct Triangle{
 }
 struct Rectangle {
 	vec2 wh;
+	vec2[] getPoints(){
+		vec2 half = wh / 2;
+		vec2 v11 = vec2(-half.x, half.y);
+		vec2 v22 = half;
+		vec2 v33 = vec2(half.x, -half.y);
+		vec2 v44 = -half;
+		return [v11,v22,v33,v33,v11,v44];
+	}
 	Triangle[] getTriangles(){
-		return [];
+		vec2 half = wh / 2;
+		vec2 v11 = vec2(-half.x, half.y);
+		vec2 v22 = half;
+		vec2 v33 = vec2(half.x, -half.y);
+		vec2 v44 = -half;
+		return [Triangle(v11,v22,v33),Triangle(v33,v11,v44)];
 	}
 }
 struct Circle {
 	float radius;
 	Triangle[] getTriangles(){
-		return [];
+		vec2[] points = getPointsOnCircle(vec2(0, 0), radius,16);
+		Triangle[] triangles=uninitializedArray!(Triangle[])(points.length);
+		vec2 o = vec2(0, 0);
+		vec2 last = points[$ - 1];
+		foreach (i, p; points) {
+			triangles[i]=Triangle(o,last,p);
+			last = p;
+		}
+		return triangles;
 	}
 }
 
@@ -39,7 +61,8 @@ struct Circle {
 bool isShape(T)(){
 	//has collide, aabb
 	//no references
-	bool ok=__traits ( isPOD , T );
+	bool ok=__traits ( isPOD , T );    
+	ok&=__traits(hasMember, T, "getTriangles"); // t
 	return ok;
 }
 
@@ -48,6 +71,7 @@ bool isShape(T)(){
  * Template to generate Universal shape
  */
 struct AnyShapeTemplate(Types...) {
+	enum maxUnionSize=63;
 	alias FromTypes=Types;
 	/** 
 	 * Generates code for universal shape
@@ -78,7 +102,7 @@ struct AnyShapeTemplate(Types...) {
 		codeEnum~="none\n}\n";
 		return codeEnum~code~"}\n"~codeChecks~"types currentType=types.none;\n";
 	}
-	mixin(getShapeCode!(Types)(8));
+	mixin(getShapeCode!(Types)(maxUnionSize));
 	/**
 	 * returns given type with check
 	 */
@@ -86,7 +110,7 @@ struct AnyShapeTemplate(Types...) {
 		foreach(i,type;FromTypes){
 			static if(is(type==T)){
 				assert(currentType==i,"got type which is not currently bound");
-				static if(T.sizeof>8){
+				static if(T.sizeof>maxUnionSize){
 					mixin("return _"~i.to!string~";");
 				}else{
 					mixin("return &_"~i.to!string~";");
@@ -102,7 +126,7 @@ struct AnyShapeTemplate(Types...) {
 		foreach(i,type;FromTypes){
 			static if(is(type==T)){
 				currentType=cast(types)i;
-				static if(T.sizeof>8){
+				static if(T.sizeof>maxUnionSize){
 					T* pointer=cast(T*)GC.malloc(T.sizeof);
 					memcpy(&obj,pointer,T.sizeof);
 					mixin("_"~i.to!string~"= pointer;");
@@ -117,13 +141,13 @@ alias AnyShape=AnyShapeTemplate!(Rectangle,Circle,Triangle);
 
 //Collision functions
 
-bool collideUniversal(T1,T2)(T1 a ,T2 b){	
-	return collide(a.getTriangles,b.getTriangles);
+bool collideUniversal(T1,T2)(Transform trA,Transform trB,T1 a ,T2 b){	
+	return collide(trA,trB,a.getTriangles,b.getTriangles);
 }
 
-bool collide(AnyShape* sA,AnyShape* sB){
-	bool function(void*,void*)[Types.length*Types.length] getJumpTable(Types...)(){
-		bool function(void*,void*)[Types.length*Types.length] jumpTable;
+bool collide(Transform trA,Transform trB,AnyShape* sA,AnyShape* sB){
+	bool function(Transform trA,Transform trB,void*,void*)[Types.length*Types.length] getJumpTable(Types...)(){
+		bool function(Transform trA,Transform trB,void*,void*)[Types.length*Types.length] jumpTable;
 		AnyShape shapeA,shapeB;
 		string getCode(Types...)(){
 			string code;
@@ -131,15 +155,15 @@ bool collide(AnyShape* sA,AnyShape* sB){
 				foreach(j,typeB;Types){
 					uint num=i*Types.length+j;
 					static if(__traits(compiles,collide(shapeA.get!typeA,shapeB.get!typeB))){
-						code~=format("bool function(%s*,%s*) ___%d=&collide;\n",typeA.stringof,typeB.stringof,num);
+						code~=format("bool function(Transform trA,Transform trB,%s*,%s*) ___%d=&collide;\n",typeA.stringof,typeB.stringof,num);
 					}else{
-						code~=format("bool function(%s*,%s*) ___%d=&collideUniversal!(%s*,%s*);\n",typeA.stringof,typeB.stringof,num,typeA.stringof,typeB.stringof);
+						code~=format("bool function(Transform trA,Transform trB,%s*,%s*) ___%d=&collideUniversal!(%s*,%s*);\n",typeA.stringof,typeB.stringof,num,typeA.stringof,typeB.stringof);
 					}
 					
 				}
 			}
 			foreach(i;0..Types.length*Types.length){
-				code~=format("jumpTable[%d]=cast(bool function(void*,void*))___%d;\n",i,i);
+				code~=format("jumpTable[%d]=cast(bool function(Transform trA,Transform trB,void*,void*))___%d;\n",i,i);
 				
 			}
 			return code;
@@ -151,17 +175,60 @@ bool collide(AnyShape* sA,AnyShape* sB){
 	if(sA.currentType==AnyShape.types.none || sB.currentType==AnyShape.types.none)return false;
 	enum jumpTable=getJumpTable!(AnyShape.FromTypes);
 	auto funcPointer=jumpTable[sA.currentType*AnyShape.FromTypes.length+sB.currentType];
-	return funcPointer(cast(void*)sA,cast(void*)sB);
+	return funcPointer(trA,trB,cast(void*)sA,cast(void*)sB);
 	
 }
 
-bool collide(Triangle[] trA,Triangle[] trB){	
+bool collide(Transform trA,Transform trB,Triangle[] trianglesA,Triangle[] trianglesB){	
+	//assert(false);
+	return true;
+}
+//scale
+bool collide(Transform trA,Transform trB,Circle* cA,Circle* cB){
+	float dtSq=(trA.pos-trB.pos).length_squared;
+	if(dtSq<cA.radius*cA.radius+cB.radius*cB.radius){
+		return true;
+	}else{
+		return false;
+	}
+}
+bool collide(Transform tr,Circle* c,vec2 p){
+	float dtSq=(tr.pos-p).length_squared;
+	if(dtSq<c.radius*c.radius){
+		return true;
+	}else{
+		return false;
+	}
+}
+//scale rot
+bool collide(Transform trA,Transform trB,Rectangle* rA,Rectangle* rB){
+	vec2 dt=trB.pos-trA.pos;
+	vec2 half = rA.wh / 2;
+	vec2 minn = dt - half;
+	vec2 maxx = dt + half;
+
+	vec2 halfB = rB.wh / 2;
+	vec2 minnB = -halfB;
+	vec2 maxxB = halfB;
+
+	return !(minnB.x > maxx.x || 
+		maxxB.x < minn.x || 
+		maxxB.y < minn.y ||
+		minnB.y > maxx.y);
+}
+bool collide(Transform tr,Rectangle* r,vec2 p){
+	vec2 half = r.wh / 2;
+	vec2 minn = tr.pos - half;
+	vec2 maxx = tr.pos + half;
+	if (p.x > minn.x && p.y > minn.y && p.x < maxx.x && p.y < maxx.y) {
+		return true;
+	}
 	return false;
 }
-bool collide(Rectangle* r,Circle* c){
+bool collide(Transform trA,Transform trB,Circle* c,Rectangle* r){
 	return true;
 }
-bool collide(Circle* c,Rectangle* r){
-	return true;
+bool collide(Transform trA,Transform trB,Rectangle* r,Circle* c){
+	return collide(trA,trB,c,r);
 }
 
