@@ -193,7 +193,8 @@ void run() {
 			gameEngine.renderer.camera.pos = grabPoint + dt;
 		}
 	}
-	if (gameEngine.window.keyPressed('b'))recDrawA.trf.rot+=3.14/8;
+	if (gameEngine.window.keyPressed('b'))recDrawA.trf.rot+=3.141541/8;
+	if (gameEngine.window.keyPressed('n'))recDrawB.trf.rot+=3.141541/8;
 	isColliding=collide(recDrawA.trf,recDrawB.trf,&recA,&recB);
 	if(collide(recDrawA.trf,&recA,gameEngine.globalMousePos)){
 		if(gameEngine.window.mouseButtonDown(MouseButton.right)){

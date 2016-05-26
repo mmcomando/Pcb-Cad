@@ -76,8 +76,6 @@ class FootprintRenderer  {
         background.mode = GL_TRIANGLES;
         foreach (ref p; f.points) {
         }
-        foreach (ref a; f.arcs) {
-        }
 
         vec2[] rendLines;
         rendLines.reserve(f.lines.length * 2);

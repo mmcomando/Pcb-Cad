@@ -201,20 +201,42 @@ bool collide(Transform tr,Circle* c,vec2 p){
 	}
 }
 //scale rot
-bool collide(Transform trA,Transform trB,Rectangle* rA,Rectangle* rB){
-	vec2 dt=trB.pos-trA.pos;
-	vec2 half = rA.wh / 2;
-	vec2 minn = dt - half;
-	vec2 maxx = dt + half;
+bool collide(Transform trAA,Transform trBB,Rectangle* rAA,Rectangle* rBB){
 
-	vec2 halfB = rB.wh / 2;
-	vec2 minnB = -halfB;
-	vec2 maxxB = halfB;
+	static bool collideAB(Transform trA,Transform trB,Rectangle* rA,Rectangle* rB){
+		vec2 dt=trB.pos-trA.pos;
+		vec2 halfA = rA.wh / 2;
+		vec2 halfB = rB.wh / 2;
+		
+		vec2 pA1 =  vec2(-halfA.x, halfA.y);
+		vec2 pA2 =   halfA;
+		vec2 pA3 =  vec2(halfA.x, -halfA.y);
+		vec2 pA4 =  - halfA;
+		
+		vec2 dtRotated=rotateVector(dt,-trA.rot);
+		vec2 pB1 = dtRotated + rotateVector(  vec2(-halfB.x, halfB.y),trB.rot-trA.rot);
+		vec2 pB2 = dtRotated + rotateVector( halfB,trB.rot-trA.rot);
+		vec2 pB3 = dtRotated + rotateVector(vec2(halfB.x, -halfB.y),trB.rot-trA.rot);
+		vec2 pB4 = dtRotated + rotateVector( - halfB,trB.rot-trA.rot);
 
-	return !(minnB.x > maxx.x || 
-		maxxB.x < minn.x || 
-		maxxB.y < minn.y ||
-		minnB.y > maxx.y);
+		if(
+			((min(pB1.x,pB2.x,pB3.x,pB4.x)<=max(pA1.x,pA2.x,pA3.x,pA4.x))  &&
+				(max(pB1.x,pB2.x,pB3.x,pB4.x)>=min(pA1.x,pA2.x,pA3.x,pA4.x)))  
+			&&
+			((min(pB1.y,pB2.y,pB3.y,pB4.y)<=max(pA1.y,pA2.y,pA3.y,pA4.y))  &&
+				(max(pB1.y,pB2.y,pB3.y,pB4.y)>=min(pA1.y,pA2.y,pA3.y,pA4.y)))
+			
+			){
+			return true;
+		}
+		return false;
+	}
+
+	if(collideAB(trAA,trBB,rAA,rBB) && collideAB(trBB,trAA,rBB,rAA)){
+		return true;
+	}
+	return false;
+
 }
 bool collide(Transform tr,Rectangle* r,vec2 p){
 	vec2 half = r.wh / 2;

@@ -472,6 +472,7 @@ enum ShapeType:ubyte {
 	Circle,
 	Rectangle
 }
+
 struct Shape {
 	vec2 pos;
 	vec2 xy; ///For Circle size?, for Rectangle size
@@ -488,11 +489,6 @@ struct Circle {
     float radius;
 }
 
-struct Arc {
-    vec2 pos;
-    vec2 start_end;
-    float radius;
-}
 
 class FootprintData {
     string name;
@@ -502,7 +498,6 @@ class FootprintData {
     vec2[] points;
     vec2[2][] lines;
     Circle[] circles;
-    Arc[] arcs;
     vec2[] snapPoints;
 
     vec2[2] boundingBox;
@@ -518,7 +513,6 @@ class FootprintData {
         points = f.points.dup;
         lines = f.lines.dup;
         circles = f.circles.dup;
-        arcs = f.arcs.dup;
         boundingBox = f.boundingBox;
         snapPoints = f.snapPoints;
     }
@@ -532,9 +526,7 @@ class FootprintData {
             minn = lines[0][0];
         } else if (circles.length) {
             minn = circles[0].pos;
-        } else if (arcs.length) {
-            minn = arcs[0].pos;
-        } else if (shapes.length) {
+        }else if (shapes.length) {
             minn = shapes[0].pos;
         } else {
             minn = vec2(0, 0);
@@ -558,12 +550,7 @@ class FootprintData {
             maxx.x = max(c.pos.x + c.radius, maxx.x);
             maxx.y = max(c.pos.y + c.radius, maxx.y);
         }
-        foreach (c; arcs) {
-            minn.x = min(c.pos.x - c.radius, minn.x);
-            minn.y = min(c.pos.y - c.radius, minn.y);
-            maxx.x = max(c.pos.x + c.radius, maxx.x);
-            maxx.y = max(c.pos.y + c.radius, maxx.y);
-        }
+       
         foreach (s; shapes) {
             final switch (s.type) {
             case ShapeType.Circle:
