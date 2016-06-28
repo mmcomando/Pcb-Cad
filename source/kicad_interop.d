@@ -5,6 +5,7 @@ import gl3n.linalg;
 import kicad_enums;
 import ki_ld = kicad_lib;
 import ki_mod = kicad_mod;
+import shapes;
 
 enum real SC=1.0/1000.0;
 
@@ -30,7 +31,7 @@ private FootprintData fromKicadFootprint(ki_mod.Module md) {
     foreach (ref ob; md.DC) {
 		vec2 p1 = vec2(ob.x1, ob.y1)*SC;
 		vec2 p2 = vec2(ob.x2, ob.y2)*SC;
-        ft.circles ~= Circle(p1, (p1 - p2).length);
+        ft.circles ~= objects.Circle(p1, (p1 - p2).length);
     }
     foreach (uint i, ref ob; md.pads) {
 		vec2 p1 = vec2(ob.po.x, ob.po.y)*SC;
@@ -57,25 +58,23 @@ private FootprintData fromKicadFootprint(ki_mod.Module md) {
             break;
         }
         Shape shape;
-        shape.pos = p1;
+        shape.trf.pos = p1;
         ft.snapPoints ~= p1;
-        shape.xy = p2;
-
         final switch (ob.sh.padShape) {
 
         case PADShape.R:
-            shape.type = ShapeType.Rectangle;
+			Rectangle rec=Rectangle(p2);
+			shape.shp.set(rec);
             ft.shapes ~= shape;
-            p.shapeID = cast(uint) ft.shapes.length - 1;
+			p.shapeID = cast(uint) ft.shapes.length - 1;
             break;
         case PADShape.T:
         case PADShape.O:
         case PADShape.C:
-            shape.type = ShapeType.Circle;
-            shape.xy.x = shape.xy.y = min(shape.xy.x, shape.xy.y);
-            shape.xy.x = shape.xy.y = max(shape.xy.x, 0.0001);
-            ft.shapes ~= shape;
-            p.shapeID = cast(uint) ft.shapes.length - 1;
+			shapes.Circle cc=shapes.Circle(max(min(p2.x, p2.y), 0.0001));
+			shape.shp.set(cc);
+			ft.shapes ~= shape;
+			p.shapeID = cast(uint) ft.shapes.length - 1;
         }
         ft.pads ~= p;
 

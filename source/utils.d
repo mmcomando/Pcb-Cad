@@ -10,6 +10,7 @@ import gl3n.linalg;
 import std.traits;
 import drawables;
 import sect_dist;
+import shapes;
 
 
 
@@ -203,11 +204,24 @@ bool traceCollideWithPoint(Trace trace, vec2 point) {
 	}
 	return false;
 }
-
+//TODO do it properly
 bool traceCollideWithPad(Trace trace, Footprint footprint, uint shapeID) {
 	Shape shape = footprint.f.shapes[shapeID];
-	vec2 point = footprint.trf.pos + rotateVector(shape.pos, footprint.trf.rot);
-	float minDistance =min(shape.xy.x, shape.xy.y);
+	vec2 point = footprint.trf.pos + rotateVector(shape.trf.pos, footprint.trf.rot);
+	float minDistance;
+	final switch(shape.shp.currentType){
+		case shape.shp.types.Rectangle:
+			auto rec=shape.shp.get!Rectangle;
+			minDistance=min(rec.wh.x,rec.wh.y);
+			break;
+		case shape.shp.types.Circle: 
+			minDistance=shape.shp.get!(shapes.Circle).radius;
+			break;
+		case shape.shp.types.Triangle:
+			assert(0);
+		case shape.shp.types.none:
+			assert(0);
+	}
 	minDistance=minDistance*minDistance+trace.traceWidth*trace.traceWidth;
 	for (int i = 1; i < trace.points.length; i++) {
 		float qLength = minimum_distance(trace.points[i - 1], trace.points[i], point);

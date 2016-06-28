@@ -22,6 +22,9 @@ struct Triangle{
 	Triangle[] getTriangles(){
 		return [Triangle(p1,p2,p3)];
 	}
+	vec2[] getPoints(){
+		return [p1,p2,p3];
+	}
 }
 struct Rectangle {
 	vec2 wh;
@@ -44,7 +47,7 @@ struct Rectangle {
 }
 struct Circle {
 	float radius;
-	Triangle[] getTriangles(){
+	Triangle[] getTriangles() {
 		vec2[] points = getPointsOnCircle(vec2(0, 0), radius,16);
 		Triangle[] triangles=uninitializedArray!(Triangle[])(points.length);
 		vec2 o = vec2(0, 0);

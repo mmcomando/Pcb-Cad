@@ -17,6 +17,7 @@ import footprint_renderer;
 import action;
 import utils;
 import drawables;
+import shapes;
 
 struct PadID {
     Footprint footprint;
@@ -130,7 +131,7 @@ void displayConnections(PcbProject proj) {
     auto getPoints(Connection* conn) {
         static vec2 getPos(T)(T a) {
             Footprint f = a.footprint;
-            vec2 padPos = f.f.shapes[f.f.pads[a.padNum].shapeID].pos;
+            vec2 padPos = f.f.shapes[f.f.pads[a.padNum].shapeID].trf.pos;
             return rotateVector(padPos, f.trf.rot) + a.footprint.trf.pos;
         }
         auto padPoints = conn.pads.map!getPos();
@@ -478,10 +479,8 @@ enum ShapeType:ubyte {
 }
 
 struct Shape {
-	vec2 pos;
-	//AnyShape shp;
-	vec2 xy; ///For Circle size?, for Rectangle size
-	ShapeType type;
+	AnyShape shp;
+	Transform trf;
 }
 
 
@@ -526,7 +525,7 @@ class FootprintData {
         } else if (circles.length) {
             minn = circles[0].pos;
         }else if (shapes.length) {
-            minn = shapes[0].pos;
+			minn = shapes[0].trf.pos;
         } else {
             minn = vec2(0, 0);
         }
@@ -551,7 +550,16 @@ class FootprintData {
         }
        
         foreach (s; shapes) {
-            final switch (s.type) {
+			AnyShape anyShape=s.shp;
+			Triangle[] tris=anyShape.getTriangles();
+			foreach(tr;tris){
+				foreach(point;tr.tupleof){
+					vec2 p=s.trf.pos+point;
+					minn.y = min(p.y, minn.y);
+					maxx.x = max(p.x, maxx.x);
+				}
+			}
+            /*final switch (s.type) {
             case ShapeType.Circle:
                 float radius = s.xy.x;
                 minn.x = min(s.pos.x - radius, minn.x);
@@ -565,7 +573,7 @@ class FootprintData {
                 maxx.x = max(s.pos.x + s.xy.x / 2, maxx.x);
                 maxx.y = max(s.pos.y + s.xy.y / 2, maxx.y);
                 break;
-            }
+            }*/
         }
         return [minn, maxx];
     }

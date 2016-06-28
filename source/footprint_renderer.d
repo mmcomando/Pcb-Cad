@@ -15,6 +15,7 @@ import engine.renderer.memory;
 import utils;
 import objects;
 import drawables;
+import shapes;
 
 class FootprintRenderer  {
     alias PosAllocator = GpuChunkAllocator!GL_ARRAY_BUFFER;
@@ -33,7 +34,6 @@ class FootprintRenderer  {
 			r.trf=t;
 			foreach (ref tt; texts) {
 				tt.text.trf=_trf*tt.trf;
-
 			}
 		}
 		
@@ -46,7 +46,7 @@ class FootprintRenderer  {
 
     private:
 		Group group;
-        TextPos[] texts;
+		TextPos[] texts;
         Circles r;
 		Transform _trf;
     }
@@ -92,8 +92,13 @@ class FootprintRenderer  {
             metas ~= Circles.CircleData(vec3(0, 0, 1), c.pos, c.radius);
         }
         vec2[] trianglePoints;
-        foreach (Shape shape; f.shapes) {
-            final switch (shape.type) {
+        foreach (shape; f.shapes) {
+			AnyShape s=shape.shp;
+			Triangle[] tris=s.getTriangles();
+			foreach(tr;tris){
+				trianglePoints~=[tr.p1+shape.trf.pos,tr.p2+shape.trf.pos,tr.p3+shape.trf.pos];
+			}
+            /*final switch (shape.types) {
             case ShapeType.Circle:
                 metas ~= Circles.CircleData(vec3(1, 0, 0), shape.pos, shape.xy.x / 2);
                 break;
@@ -110,7 +115,7 @@ class FootprintRenderer  {
                 trianglePoints ~= v22;
                 trianglePoints ~= v33;
                 break;
-            }
+            }*/
         }
 		triangles = SomethingNoTransform.fromPoints(trianglePoints);
         d.r = Circles.addCircles(metas);
@@ -130,12 +135,25 @@ class FootprintRenderer  {
             data.trf=footprint.trf;
 			data.trf.pos=vec2(0,0);
 			trf.rot=data.trf.rot = 0;
-			trf.pos=sh.pos;
-            if (sh.type == ShapeType.Rectangle && sh.xy.x < sh.xy.y) {
-				trf.rot+= 3.14 / 2;
-            }
-			data.trf.scale =min(sh.xy.x, sh.xy.y);
-			trf.scale =min(sh.xy.x, sh.xy.y);
+			trf.pos=sh.trf.pos;
+            if (sh.shp.currentType == AnyShape.types.Rectangle) {
+				Rectangle* rec=sh.shp.get!Rectangle;
+				data.trf.scale =rec.wh.y;
+				if(rec.wh.x < rec.wh.y){
+					trf.rot+= 3.14 / 2;
+					data.trf.scale =rec.wh.x;
+				}
+			}else if (sh.shp.currentType == AnyShape.types.Circle) {
+				Rectangle* rec=sh.shp.get!Rectangle;
+				data.trf.scale =rec.wh.y;
+				if(rec.wh.x < rec.wh.y){
+					trf.rot+= 3.14 / 2;
+					data.trf.scale =rec.wh.x;
+				}
+			}else{
+				assert(0);
+			}
+			trf.scale =data.trf.scale;
             d.texts ~= TextPos(data,trf);
 
         }
@@ -169,9 +187,8 @@ class FootprintRenderer  {
         foreach (i, d; datas) {
 			list.add(d.group, Priority(18));
             list.add(d.r, Priority(20));
-            foreach (tt; d.texts)
-                list.add(tt.text, Priority(22));
-
+			foreach (tt; d.texts)
+				list.add(tt.text, Priority(22));
         }
     }
 
