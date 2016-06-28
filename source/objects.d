@@ -473,15 +473,12 @@ struct Pad {
     PadType type;
     //uint wireID;
 }
-enum ShapeType:ubyte {
-	Circle,
-	Rectangle
-}
 
-struct Shape {
-	AnyShape shp;
+struct TrShape {
+	AnyShape shape;
 	Transform trf;
 }
+
 
 
 struct Circle {
@@ -493,7 +490,7 @@ struct Circle {
 class FootprintData {
     string name;
     Pad[] pads;
-    Shape[] shapes;
+    TrShape[] shapes;
     vec2[] points;
     vec2[2][] lines;
     Circle[] circles;
@@ -550,7 +547,7 @@ class FootprintData {
         }
        
         foreach (s; shapes) {
-			AnyShape anyShape=s.shp;
+			AnyShape anyShape=s.shape;
 			Triangle[] tris=anyShape.getTriangles();
 			foreach(tr;tris){
 				foreach(point;tr.tupleof){
@@ -559,21 +556,6 @@ class FootprintData {
 					maxx.x = max(p.x, maxx.x);
 				}
 			}
-            /*final switch (s.type) {
-            case ShapeType.Circle:
-                float radius = s.xy.x;
-                minn.x = min(s.pos.x - radius, minn.x);
-                minn.y = min(s.pos.y - radius, minn.y);
-                maxx.x = max(s.pos.x + radius, maxx.x);
-                maxx.y = max(s.pos.y + radius, maxx.y);
-                break;
-            case ShapeType.Rectangle:
-                minn.x = min(s.pos.x - s.xy.x / 2, minn.x);
-                minn.y = min(s.pos.y - s.xy.y / 2, minn.y);
-                maxx.x = max(s.pos.x + s.xy.x / 2, maxx.x);
-                maxx.y = max(s.pos.y + s.xy.y / 2, maxx.y);
-                break;
-            }*/
         }
         return [minn, maxx];
     }

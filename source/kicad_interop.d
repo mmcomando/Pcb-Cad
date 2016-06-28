@@ -57,14 +57,14 @@ private FootprintData fromKicadFootprint(ki_mod.Module md) {
             p.type = PadType.THT;
             break;
         }
-        Shape shape;
+        TrShape shape;
         shape.trf.pos = p1;
         ft.snapPoints ~= p1;
         final switch (ob.sh.padShape) {
 
         case PADShape.R:
 			Rectangle rec=Rectangle(p2);
-			shape.shp.set(rec);
+			shape.shape.set(rec);
             ft.shapes ~= shape;
 			p.shapeID = cast(uint) ft.shapes.length - 1;
             break;
@@ -72,7 +72,7 @@ private FootprintData fromKicadFootprint(ki_mod.Module md) {
         case PADShape.O:
         case PADShape.C:
 			shapes.Circle cc=shapes.Circle(max(min(p2.x, p2.y), 0.0001));
-			shape.shp.set(cc);
+			shape.shape.set(cc);
 			ft.shapes ~= shape;
 			p.shapeID = cast(uint) ft.shapes.length - 1;
         }

@@ -93,29 +93,11 @@ class FootprintRenderer  {
         }
         vec2[] trianglePoints;
         foreach (shape; f.shapes) {
-			AnyShape s=shape.shp;
+			AnyShape s=shape.shape;
 			Triangle[] tris=s.getTriangles();
 			foreach(tr;tris){
 				trianglePoints~=[tr.p1+shape.trf.pos,tr.p2+shape.trf.pos,tr.p3+shape.trf.pos];
 			}
-            /*final switch (shape.types) {
-            case ShapeType.Circle:
-                metas ~= Circles.CircleData(vec3(1, 0, 0), shape.pos, shape.xy.x / 2);
-                break;
-            case ShapeType.Rectangle:
-                vec2 half = shape.xy / 2;
-                vec2 v11 = shape.pos + vec2(-half.x, half.y);
-                vec2 v22 = shape.pos + half;
-                vec2 v33 = shape.pos + vec2(half.x, -half.y);
-                vec2 v44 = shape.pos - half;
-                trianglePoints ~= v11;
-                trianglePoints ~= v22;
-                trianglePoints ~= v44;
-                trianglePoints ~= v44;
-                trianglePoints ~= v22;
-                trianglePoints ~= v33;
-                break;
-            }*/
         }
 		triangles = SomethingNoTransform.fromPoints(trianglePoints);
         d.r = Circles.addCircles(metas);
@@ -131,20 +113,20 @@ class FootprintRenderer  {
             if (name == "?" || name == "")
                 continue;
             auto data = Text.fromString(name);
-			Shape sh = footprint.f.shapes[pad.shapeID];
+			TrShape sh = footprint.f.shapes[pad.shapeID];
             data.trf=footprint.trf;
 			data.trf.pos=vec2(0,0);
 			trf.rot=data.trf.rot = 0;
 			trf.pos=sh.trf.pos;
-            if (sh.shp.currentType == AnyShape.types.Rectangle) {
-				Rectangle* rec=sh.shp.get!Rectangle;
+            if (sh.shape.currentType == AnyShape.Types.Rectangle) {
+				Rectangle* rec=sh.shape.get!Rectangle;
 				data.trf.scale =rec.wh.y;
 				if(rec.wh.x < rec.wh.y){
 					trf.rot+= 3.14 / 2;
 					data.trf.scale =rec.wh.x;
 				}
-			}else if (sh.shp.currentType == AnyShape.types.Circle) {
-				Rectangle* rec=sh.shp.get!Rectangle;
+			}else if (sh.shape.currentType == AnyShape.Types.Circle) {
+				Rectangle* rec=sh.shape.get!Rectangle;
 				data.trf.scale =rec.wh.y;
 				if(rec.wh.x < rec.wh.y){
 					trf.rot+= 3.14 / 2;

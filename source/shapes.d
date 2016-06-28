@@ -73,9 +73,9 @@ bool isShape(T)(){
 /**
  * Template to generate Universal shape
  */
-struct AnyShapeTemplate(Types...) {
+struct AnyShapeTemplate(ShapeTypes...) {
 	enum maxUnionSize=63;
-	alias FromTypes=Types;
+	alias FromTypes=ShapeTypes;
 	//enum types{...}    //from mixin
 	//types currentType; //from mixin
 
@@ -101,7 +101,7 @@ struct AnyShapeTemplate(Types...) {
 	auto  set(T)(T obj){
 		foreach(i,type;FromTypes){
 			static if(is(type==T)){
-				currentType=cast(types)i;
+				currentType=cast(Types)i;
 				static if(T.sizeof>maxUnionSize){
 					T* pointer=cast(T*)GC.malloc(T.sizeof);
 					memcpy(&obj,pointer,T.sizeof);
@@ -114,32 +114,30 @@ struct AnyShapeTemplate(Types...) {
 	}
 	Triangle[] getTriangles(){
 		final switch(currentType){
-			case types.Rectangle:
+			case Types.Rectangle:
 				return get!(Rectangle).getTriangles();
-			case types.Circle:
+			case Types.Circle:
 				return get!(Circle).getTriangles();
-			case types.Triangle:
+			case Types.Triangle:
 				return get!(Triangle).getTriangles();
-			case types.none:return [];
+			case Types.none:return [];
 		}
 	}
 
 	//  --  Mixin --
 	/** 
 	 * Generates code for universal shape
-	 * types which can be packed to union are packed others are allocated and there is stored their pointer
+	 * types which can be packed to union are packed, others are allocated and there is stored their pointer
 	 */
-	static string getShapeCode(types...)(uint unionSize){
+	static string getShapeCode(ShapeTypes...)(uint unionSize){
 		string codeChecks;
-		string codeEnum="enum types:ubyte{\n";
+		string codeEnum="enum Types:ubyte{\n";
 		string code="private union{\n";
-		foreach(uint i,type;types){
+		foreach(uint i,type;ShapeTypes){
 			string typeName=type.stringof;
-			//string valueName=toLower(typeName[0..1])~typeName[1..$];
 			string valueName="_"~i.to!string;
 			string ampChar="&";
 			string pointer="";
-			//if(typeName==valueName)valueName="_"~valueName;
 			codeEnum~=typeName~"="~i.to!string~",\n";
 			if(type.sizeof>unionSize){
 				pointer="*";
@@ -152,9 +150,9 @@ struct AnyShapeTemplate(Types...) {
 			
 		}
 		codeEnum~="none\n}\n";
-		return codeEnum~code~"}\n"~codeChecks~"types currentType=types.none;\n";
+		return codeEnum~code~"}\n"~codeChecks~"Types currentType=Types.none;\n";
 	}
-	mixin(getShapeCode!(Types)(maxUnionSize));
+	mixin(getShapeCode!(ShapeTypes)(maxUnionSize));
 }
 alias AnyShape=AnyShapeTemplate!(Rectangle,Circle,Triangle);
 
@@ -191,7 +189,7 @@ bool collide(Transform trA,Transform trB,AnyShape* sA,AnyShape* sB){
 		mixin(getCode!Types);
 		return jumpTable;
 	}
-	if(sA.currentType==AnyShape.types.none || sB.currentType==AnyShape.types.none)return false;
+	if(sA.currentType==AnyShape.Types.none || sB.currentType==AnyShape.Types.none)return false;
 	enum jumpTable=getJumpTable!(AnyShape.FromTypes);
 	auto funcPointer=jumpTable[sA.currentType*AnyShape.FromTypes.length+sB.currentType];
 	return funcPointer(trA,trB,cast(void*)sA,cast(void*)sB);

@@ -206,20 +206,20 @@ bool traceCollideWithPoint(Trace trace, vec2 point) {
 }
 //TODO do it properly
 bool traceCollideWithPad(Trace trace, Footprint footprint, uint shapeID) {
-	Shape shape = footprint.f.shapes[shapeID];
+	TrShape shape = footprint.f.shapes[shapeID];
 	vec2 point = footprint.trf.pos + rotateVector(shape.trf.pos, footprint.trf.rot);
 	float minDistance;
-	final switch(shape.shp.currentType){
-		case shape.shp.types.Rectangle:
-			auto rec=shape.shp.get!Rectangle;
+	final switch(shape.shape.currentType){
+		case shape.shape.Types.Rectangle:
+			auto rec=shape.shape.get!Rectangle;
 			minDistance=min(rec.wh.x,rec.wh.y);
 			break;
-		case shape.shp.types.Circle: 
-			minDistance=shape.shp.get!(shapes.Circle).radius;
+		case shape.shape.Types.Circle: 
+			minDistance=shape.shape.get!(shapes.Circle).radius;
 			break;
-		case shape.shp.types.Triangle:
+		case shape.shape.Types.Triangle:
 			assert(0);
-		case shape.shp.types.none:
+		case shape.shape.Types.none:
 			assert(0);
 	}
 	minDistance=minDistance*minDistance+trace.traceWidth*trace.traceWidth;
