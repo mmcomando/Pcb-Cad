@@ -32,10 +32,7 @@ class FootprintRenderer  {
 			group.trf=t;
 			r.trf=t;
 			foreach (ref tt; texts) {
-				//writeln("-");
-				//writeln(tt.trf);
 				tt.text.trf=_trf*tt.trf;
-				//writeln(tt.trf);
 
 			}
 		}
@@ -122,9 +119,10 @@ class FootprintRenderer  {
         triangles.mode = GL_TRIANGLES;
 
 		//pad's names
-        foreach (name, pad; lockstep(footprint.padConnections, f.pads)) {
+		//foreach (name, pad; lockstep(footprint.padConnections, f.pads)) {
+		foreach ( pad; f.pads) {
 			Transform trf;
-            
+			string name=pad.connection;
             if (name == "?" || name == "")
                 continue;
             auto data = Text.fromString(name);
@@ -136,16 +134,15 @@ class FootprintRenderer  {
             if (sh.type == ShapeType.Rectangle && sh.xy.x < sh.xy.y) {
 				trf.rot+= 3.14 / 2;
             }
-            data.trf.scale =min(sh.xy.x, sh.xy.y);
-			writeln(TextPos(data,trf));
+			data.trf.scale =min(sh.xy.x, sh.xy.y);
+			trf.scale =min(sh.xy.x, sh.xy.y);
             d.texts ~= TextPos(data,trf);
-			assert(0);
 
         }
 
 		auto data = Text.fromString(f.name);
 		vec2 bb_dt=f.boundingBox[1]-f.boundingBox[0];
-		d.texts ~= TextPos(data,Transform(vec2(0,0),0,0.2*bb_dt.y));
+		//d.texts ~= TextPos(data,Transform(vec2(0,0),0,0.2*bb_dt.y));
 
         datas ~= d;
 		d.group.add(background);

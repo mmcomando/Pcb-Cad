@@ -261,6 +261,7 @@ class PcbProject {
     void addFootprint(Footprint f) {
         footprints ~= f;
         connectionsManager.add(f);
+		f.addToDraw();
     }
 
     void removeFootprint(size_t i) {
@@ -429,12 +430,15 @@ class Footprint {
         if (rend is null)
             rend = new FootprintRenderer;
         this.f = f;
-		rendData = rend.addFootprint(this);
+		//rendData = rend.addFootprint(this);
         padConnections.length = f.pads.length;
         foreach (i, ref p; padConnections)
             p = f.pads[i].connection;
     }
-
+	void addToDraw() {
+		rendData = rend.addFootprint(this);
+		rendData.trf=_trf;
+	}
 
     void removeFromDraw() {
         rend.removeFootprint(rendData);
