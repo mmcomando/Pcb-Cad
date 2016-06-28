@@ -121,6 +121,7 @@ class FootprintRenderer  {
         triangles.color = vec3(0.9, 0, 0);
         triangles.mode = GL_TRIANGLES;
 
+		//pad's names
         foreach (name, pad; lockstep(footprint.padConnections, f.pads)) {
 			Transform trf;
             
@@ -250,3 +251,4 @@ class GridDraw : Drawable {
         }
     }
 }
+

@@ -13,14 +13,14 @@ void test(){
 	A.set(Circle());
 	B.set(Rectangle());	
 	Transform trA, trB;
-	collide(trA,trB,&A,&B);
+	//collide(trA,trB,&A,&B);
 }
 struct Triangle{
 	vec2 p1;
 	vec2 p2;
 	vec2 p3;
 	Triangle[] getTriangles(){
-		return [];
+		return [Triangle(p1,p2,p3)];
 	}
 }
 struct Rectangle {
@@ -73,36 +73,9 @@ bool isShape(T)(){
 struct AnyShapeTemplate(Types...) {
 	enum maxUnionSize=63;
 	alias FromTypes=Types;
-	/** 
-	 * Generates code for universal shape
-	 * types which can be packed to union are packed others are allocated and there is stored their pointer
-	 */
-	static string getShapeCode(types...)(uint unionSize){
-		string codeChecks;
-		string codeEnum="enum types:ubyte{\n";
-		string code="private union{\n";
-		foreach(uint i,type;types){
-			string typeName=type.stringof;
-			//string valueName=toLower(typeName[0..1])~typeName[1..$];
-			string valueName="_"~i.to!string;
-			string ampChar="&";
-			string pointer="";
-			//if(typeName==valueName)valueName="_"~valueName;
-			codeEnum~=typeName~"="~i.to!string~",\n";
-			if(type.sizeof>unionSize){
-				pointer="*";
-				ampChar="";
-			}
-			code~= typeName~pointer;
-			
-			code~=" "~valueName~";\n";
-			
-			
-		}
-		codeEnum~="none\n}\n";
-		return codeEnum~code~"}\n"~codeChecks~"types currentType=types.none;\n";
-	}
-	mixin(getShapeCode!(Types)(maxUnionSize));
+	//enum types{...}    //from mixin
+	//types currentType; //from mixin
+
 	/**
 	 * returns given type with check
 	 */
@@ -136,6 +109,49 @@ struct AnyShapeTemplate(Types...) {
 			}
 		}
 	}
+	Triangle[] getTriangles(){
+		final switch(currentType){
+			case types.Rectangle:
+				return get!(Rectangle).getTriangles();
+			case types.Circle:
+				return get!(Circle).getTriangles();
+			case types.Triangle:
+				return get!(Triangle).getTriangles();
+			case types.none:return [];
+		}
+	}
+
+	//  --  Mixin --
+	/** 
+	 * Generates code for universal shape
+	 * types which can be packed to union are packed others are allocated and there is stored their pointer
+	 */
+	static string getShapeCode(types...)(uint unionSize){
+		string codeChecks;
+		string codeEnum="enum types:ubyte{\n";
+		string code="private union{\n";
+		foreach(uint i,type;types){
+			string typeName=type.stringof;
+			//string valueName=toLower(typeName[0..1])~typeName[1..$];
+			string valueName="_"~i.to!string;
+			string ampChar="&";
+			string pointer="";
+			//if(typeName==valueName)valueName="_"~valueName;
+			codeEnum~=typeName~"="~i.to!string~",\n";
+			if(type.sizeof>unionSize){
+				pointer="*";
+				ampChar="";
+			}
+			code~= typeName~pointer;
+			
+			code~=" "~valueName~";\n";
+			
+			
+		}
+		codeEnum~="none\n}\n";
+		return codeEnum~code~"}\n"~codeChecks~"types currentType=types.none;\n";
+	}
+	mixin(getShapeCode!(Types)(maxUnionSize));
 }
 alias AnyShape=AnyShapeTemplate!(Rectangle,Circle,Triangle);
 
@@ -180,8 +196,23 @@ bool collide(Transform trA,Transform trB,AnyShape* sA,AnyShape* sB){
 }
 
 bool collide(Transform trA,Transform trB,Triangle[] trianglesA,Triangle[] trianglesB){	
-	//assert(false);
-	return true;
+	vec2 dt=trB.pos-trA.pos;
+	vec2 dtRotated=rotateVector(dt,-trA.rot);
+	foreach(triA;trianglesA){
+		foreach(i,triB;trianglesB){
+			triB.p1 = dtRotated + rotateVector(triB.p1,trB.rot-trA.rot);
+			triB.p2 = dtRotated + rotateVector(triB.p2,trB.rot-trA.rot);
+			triB.p3 = dtRotated + rotateVector(triB.p3,trB.rot-trA.rot);
+
+			//triB.p1+=dt;
+			//triB.p2+=dt;
+			//triB.p3+=dt;
+			if(triangleTtiangle(triA,triB)){
+				return true;
+			}
+		}
+	}
+	return false;
 }
 //scale
 bool collide(Transform trA,Transform trB,Circle* cA,Circle* cB){
@@ -247,6 +278,18 @@ bool collide(Transform tr,Rectangle* r,vec2 p){
 	}
 	return false;
 }
+
+bool collide(Transform transform,AnyShape* shape,vec2 p){
+	p-=transform.pos;
+	p=rotateVector(p,-transform.rot);
+	Triangle[] triangles=shape.getTriangles();
+	foreach(tr;triangles){
+		if(pointInTriangle(tr,p)){
+			return true;
+		}
+	}
+	return false;
+}
 bool collide(Transform trA,Transform trB,Circle* c,Rectangle* r){
 	return true;
 }
@@ -254,3 +297,64 @@ bool collide(Transform trA,Transform trB,Rectangle* r,Circle* c){
 	return collide(trA,trB,c,r);
 }
 
+
+//////////////////
+///
+bool pointInTriangle(Triangle tr,vec2 P){
+	float cross(vec2 u,vec2 v){
+		return u.x*v.y-u.y*v.x;
+	}
+	auto A=tr.p1;
+	auto B=tr.p2;
+	auto C=tr.p3;
+	vec2 v0 = [C.x-A.x, C.y-A.y];
+	vec2 v1 = [B.x-A.x, B.y-A.y];
+	vec2 v2 = [P.x-A.x, P.y-A.y];
+	auto u = cross(v2,v0);
+	auto v = cross(v1,v2);
+	auto d = cross(v1,v0);
+	if (d<0){
+		u=-u;
+		v=-v;
+		d=-d;
+	}
+	return u>=0 && v>=0 && (u+v) <= d;
+	
+}
+import sect_dist;
+bool line_intersect2(vec2 v1,vec2 v2,vec2 v3,vec2 v4){
+
+	auto d = (v4.y-v3.y)*(v2.x-v1.x)-(v4.x-v3.x)*(v2.y-v1.y);
+	auto u = (v4.x-v3.x)*(v1.y-v3.y)-(v4.y-v3.y)*(v1.x-v3.x);
+	auto v = (v2.x-v1.x)*(v1.y-v3.y)-(v2.y-v1.y)*(v1.x-v3.x);
+	if (d<0){
+		u=-u;
+		v=-v;
+		d=-d;
+	}
+	return (0<=u && u<=d) && (0<=v && v<=d);
+}
+bool triangleTtiangle(Triangle t1,Triangle t2){
+	
+	if (line_intersect2(t1.p1,t1.p2,t2.p1,t2.p2))return true;
+	if (line_intersect2(t1.p1,t1.p2,t2.p1,t2.p3))return true;
+	if (line_intersect2(t1.p1,t1.p2,t2.p2,t2.p3))return true;
+	if (line_intersect2(t1.p1,t1.p3,t2.p1,t2.p2))return true;
+	if (line_intersect2(t1.p1,t1.p3,t2.p1,t2.p3))return true;
+	if (line_intersect2(t1.p1,t1.p3,t2.p2,t2.p3))return true;
+	if (line_intersect2(t1.p2,t1.p3,t2.p1,t2.p2))return true;
+	if (line_intersect2(t1.p2,t1.p3,t2.p1,t2.p3))return true;
+	if (line_intersect2(t1.p2,t1.p3,t2.p2,t2.p3))return true;
+	bool inTri = true ;
+	inTri = inTri && pointInTriangle(t1, t2.p1);
+	inTri = inTri && pointInTriangle(t1, t2.p2);
+	inTri = inTri && pointInTriangle(t1, t2.p3);
+	if (inTri)  return true;
+	inTri = true;
+	inTri = inTri && pointInTriangle(t2, t1.p1);
+	inTri = inTri && pointInTriangle(t2, t1.p2);
+	inTri = inTri && pointInTriangle(t2, t1.p3);
+	if (inTri) return true;
+	
+	return false;
+}

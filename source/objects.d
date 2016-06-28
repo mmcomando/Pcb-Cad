@@ -475,14 +475,11 @@ enum ShapeType:ubyte {
 
 struct Shape {
 	vec2 pos;
+	//AnyShape shp;
 	vec2 xy; ///For Circle size?, for Rectangle size
 	ShapeType type;
 }
 
-struct Copper {
-    Shape shape;
-    uint wireID;
-}
 
 struct Circle {
     vec2 pos;
@@ -493,7 +490,6 @@ struct Circle {
 class FootprintData {
     string name;
     Pad[] pads;
-    Copper[] coppers;
     Shape[] shapes;
     vec2[] points;
     vec2[2][] lines;
@@ -508,7 +504,6 @@ class FootprintData {
 
         name = f.name;
         pads = f.pads.dup;
-        coppers = f.coppers.dup;
         shapes = f.shapes.dup;
         points = f.points.dup;
         lines = f.lines.dup;

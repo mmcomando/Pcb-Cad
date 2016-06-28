@@ -18,7 +18,7 @@ import project_actions;
 import shaders;
 import drawables;
 import sect_dist;
-import shapes:test,Rectangle,collide;
+import shapes:AnyShape,test,Rectangle,collide,CircleAny=Circle;
 
 bool initialized = false;
 PcbProject project;
@@ -28,15 +28,16 @@ Circles cursor;
 Text testText;
 DynamicText dText;
 Something recDrawA,recDrawB;
-Rectangle recA,recB;
+//ectangle recA,recB;
 bool isColliding=false;
 
+AnyShape somShapeA,somShapeB;
+Something somDraw;
 //TODO :
 //shapes <- very importatnt :/
 // connection nets from string to uint ID
 
 void init() {
-
 
 	renderer = gameEngine.renderer;
 	renderer.init();
@@ -69,14 +70,23 @@ void init() {
 
 
 	test();
-	recA.wh=vec2(0.004,0.004);
-	writeln(recA.getPoints);
-	recDrawA=Something.fromPoints(recA.getPoints);
-	recB.wh=vec2(0.02,0.002);
-	recDrawB=Something.fromPoints(recB.getPoints);
+	//recA.wh=vec2(0.004,0.004);
+	somShapeA.set(Rectangle(vec2(0.004,0.004)));
+	recDrawA=somShapeA.toDrawable();
+	//writeln(recA.getPoints);
+	//recDrawA=Something.fromPoints(recA.getPoints);
+	somShapeB.set(Rectangle(vec2(0.02,0.02)));
+	recDrawB=somShapeB.toDrawable();
+	//recB.wh=vec2(0.02,0.002);
+	//recDrawB=Something.fromPoints(recB.getPoints);
 	//recDrawB.trf.pos=vec2(0.002);
 	recDrawB.color=vec3(1,0,1);
 	writeln(recDrawA);
+
+	//somShape.set(Rectangle(vec2(0.008,0.001)));
+	//somShape.set(CircleAny(0.01));
+	//somDraw=somShape.toDrawable();
+	//somDraw.trf.pos=vec2(-0.008,0);
 
 
 	project.name = "test";
@@ -195,8 +205,11 @@ void run() {
 	}
 	if (gameEngine.window.keyPressed('b'))recDrawA.trf.rot+=3.141541/8;
 	if (gameEngine.window.keyPressed('n'))recDrawB.trf.rot+=3.141541/8;
-	isColliding=collide(recDrawA.trf,recDrawB.trf,&recA,&recB);
-	if(collide(recDrawA.trf,&recA,gameEngine.globalMousePos)){
+	//isColliding=collide(recDrawA.trf,recDrawB.trf,&recA,&recB);
+	//if(collide(recDrawA.trf,&recA,gameEngine.globalMousePos)){
+	isColliding=collide(recDrawA.trf,recDrawB.trf,&somShapeA,&somShapeB);
+	//isColliding=collide(recDrawA.trf,&somShapeA,gameEngine.globalMousePos);
+	if(collide(recDrawA.trf,&somShapeA,gameEngine.globalMousePos)){
 		if(gameEngine.window.mouseButtonDown(MouseButton.right)){
 			recDrawA.trf.pos=gameEngine.globalMousePos;
 		}
@@ -216,6 +229,7 @@ void run() {
 		tr.addToDraw(renderer.renderList);
 	renderer.renderList.add(centralCircle, Priority(250));
 	renderer.renderList.add(cursor, Priority(250));
+	//renderer.renderList.add(somDraw, Priority(255));
 	renderer.renderList.add(recDrawA, Priority(240));
 	renderer.renderList.add(recDrawB, Priority(240));
 	//renderer.renderList.add(testText, Priority(251));
@@ -224,3 +238,5 @@ void run() {
 		renderer.renderList.add(sm, Priority(200));
 	renderer.draw();
 }
+
+

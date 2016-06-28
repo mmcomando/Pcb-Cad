@@ -7,6 +7,7 @@
 	],
 	"dependencies" : {
 		"glamour" : ">=0.0.0",
+		"gl3n" : ">=0.0.0",
 		"cerealed" : ">=0.0.0"
 	},
 	"libs" : [
