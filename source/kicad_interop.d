@@ -6,6 +6,7 @@ import kicad_enums;
 import ki_ld = kicad_lib;
 import ki_mod = kicad_mod;
 import shapes;
+import utils;
 
 enum real SC=1.0/1000.0;
 
@@ -31,7 +32,9 @@ private FootprintData fromKicadFootprint(ki_mod.Module md) {
     foreach (ref ob; md.DC) {
 		vec2 p1 = vec2(ob.x1, ob.y1)*SC;
 		vec2 p2 = vec2(ob.x2, ob.y2)*SC;
-        ft.circles ~= objects.Circle(p1, (p1 - p2).length);
+		Transform trf;
+		trf.pos=p1;
+        ft.trCircles ~= TrCircle(trf, Circle((p1 - p2).length));
     }
     foreach (uint i, ref ob; md.pads) {
 		vec2 p1 = vec2(ob.po.x, ob.po.y)*SC;

@@ -88,8 +88,8 @@ class FootprintRenderer  {
         points.color = vec3(0, 1, 0);
         points.mode = GL_POINTS;
         Circles.CircleData[] metas;
-        foreach (ref c; f.circles) {
-            metas ~= Circles.CircleData(vec3(0, 0, 1), c.pos, c.radius);
+        foreach (ref c; f.trCircles) {
+            metas ~= Circles.CircleData(vec3(0, 0, 1), c.trf.pos, c.circle.radius);
         }
         vec2[] trianglePoints;
         foreach (shape; f.shapes) {

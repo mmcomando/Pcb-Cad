@@ -478,13 +478,11 @@ struct TrShape {
 	AnyShape shape;
 	Transform trf;
 }
-
-
-
-struct Circle {
-    vec2 pos;
-    float radius;
+struct TrCircle {
+	Transform trf;
+	Circle circle;
 }
+
 
 
 class FootprintData {
@@ -493,7 +491,7 @@ class FootprintData {
     TrShape[] shapes;
     vec2[] points;
     vec2[2][] lines;
-    Circle[] circles;
+    TrCircle[] trCircles;
     vec2[] snapPoints;
 
     vec2[2] boundingBox;
@@ -507,7 +505,7 @@ class FootprintData {
         shapes = f.shapes.dup;
         points = f.points.dup;
         lines = f.lines.dup;
-        circles = f.circles.dup;
+        trCircles = f.trCircles.dup;
         boundingBox = f.boundingBox;
         snapPoints = f.snapPoints;
     }
@@ -519,8 +517,8 @@ class FootprintData {
             minn = points[0];
         } else if (lines.length) {
             minn = lines[0][0];
-        } else if (circles.length) {
-            minn = circles[0].pos;
+        } else if (trCircles.length) {
+            minn = trCircles[0].trf.pos;
         }else if (shapes.length) {
 			minn = shapes[0].trf.pos;
         } else {
@@ -539,11 +537,13 @@ class FootprintData {
             maxx.x = max(l[0].x, l[1].x, maxx.x);
             maxx.y = max(l[0].y, l[1].y, maxx.y);
         }
-        foreach (c; circles) {
-            minn.x = min(c.pos.x - c.radius, minn.x);
-            minn.y = min(c.pos.y - c.radius, minn.y);
-            maxx.x = max(c.pos.x + c.radius, maxx.x);
-            maxx.y = max(c.pos.y + c.radius, maxx.y);
+        foreach (circle; trCircles) {
+			Transform t=circle.trf;
+			Circle c=circle.circle;
+            minn.x = min(t.pos.x - c.radius, minn.x);
+            minn.y = min(t.pos.y - c.radius, minn.y);
+            maxx.x = max(t.pos.x + c.radius, maxx.x);
+            maxx.y = max(t.pos.y + c.radius, maxx.y);
         }
        
         foreach (s; shapes) {
