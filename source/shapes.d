@@ -59,7 +59,27 @@ struct Circle {
 		return triangles;
 	}
 }
+struct PolyLine {
+	vec2[] points;
+	float traceWidth;
 
+	//TODO no corners
+	Triangle[] getTriangles() {
+		vec2 last = points[0];
+		Triangle[] triangles;
+		foreach (p; points[1 .. $]) {
+			vec2 normal = (p - last).normalized();
+			vec2 tangent = vec2(normal.y, -normal.x) * traceWidth / 2;
+			vec2 v1 = last + tangent;
+			vec2 v2 = p + tangent;
+			vec2 v3 = p - tangent;
+			vec2 v4 = last - tangent;
+			triangles~= [Triangle(v1,v2,v4),Triangle(v4,v2,v3)];
+			last = p;
+		}
+		return triangles;
+	}
+}
 
 bool isShape(T)(){
 	//has collide, aabb
@@ -120,6 +140,8 @@ struct AnyShapeTemplate(ShapeTypes...) {
 				return get!(Circle).getTriangles();
 			case Types.Triangle:
 				return get!(Triangle).getTriangles();
+			case Types.PolyLine:
+				return get!(PolyLine).getTriangles();
 			case Types.none:return [];
 		}
 	}
@@ -154,7 +176,7 @@ struct AnyShapeTemplate(ShapeTypes...) {
 	}
 	mixin(getShapeCode!(ShapeTypes)(maxUnionSize));
 }
-alias AnyShape=AnyShapeTemplate!(Rectangle,Circle,Triangle);
+alias AnyShape=AnyShapeTemplate!(Rectangle,Circle,Triangle,PolyLine);
 
 //Collision functions
 

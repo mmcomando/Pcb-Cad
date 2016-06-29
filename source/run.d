@@ -18,7 +18,7 @@ import project_actions;
 import shaders;
 import drawables;
 import sect_dist;
-import shapes:AnyShape,test,Rectangle,collide,CircleAny=Circle;
+import shapes:AnyShape,test,Rectangle,collide,CircleAny=Circle,PolyLine;
 
 bool initialized = false;
 PcbProject project;
@@ -70,23 +70,25 @@ void init() {
 
 
 	test();
-	//recA.wh=vec2(0.004,0.004);
-	somShapeA.set(Rectangle(vec2(0.004,0.004)));
-	recDrawA=somShapeA.toDrawable();
-	//writeln(recA.getPoints);
-	//recDrawA=Something.fromPoints(recA.getPoints);
-	somShapeB.set(Rectangle(vec2(0.02,0.02)));
-	recDrawB=somShapeB.toDrawable();
-	//recB.wh=vec2(0.02,0.002);
-	//recDrawB=Something.fromPoints(recB.getPoints);
-	//recDrawB.trf.pos=vec2(0.002);
-	recDrawB.color=vec3(1,0,1);
-	writeln(recDrawA);
+	PolyLine traceA,traceB;
+	traceA.traceWidth=traceB.traceWidth=0.001;
+	traceA.points~=vec2(0.000,0.000);
+	traceA.points~=vec2(0.01,0.000);
+	traceA.points~=vec2(0.01,0.01);
 
-	//somShape.set(Rectangle(vec2(0.008,0.001)));
-	//somShape.set(CircleAny(0.01));
-	//somDraw=somShape.toDrawable();
-	//somDraw.trf.pos=vec2(-0.008,0);
+	traceB.points~=vec2(0.000,0.000);
+	traceB.points~=vec2(0.01,0.01);
+	traceB.points~=vec2(0.01,0.02);
+	writeln(traceA.getTriangles);
+	//somShapeA.set(Rectangle(vec2(0.004,0.004)));
+	//somShapeB.set(Rectangle(vec2(0.02,0.02)));
+	somShapeA.set(traceA);
+	somShapeB.set(traceB);
+	recDrawA=somShapeA.toDrawable();
+	recDrawB=somShapeB.toDrawable();
+	recDrawB.color=vec3(1,0,1);
+	recDrawA.color=vec3(0,0,1);
+	writeln(recDrawA);
 
 
 	project.name = "test";
@@ -221,9 +223,10 @@ void run() {
 			gameEngine.fps,gameEngine.minTime * 1000, gameEngine.maxTime * 1000,gameEngine.globalMousePos.x,gameEngine.globalMousePos.y,isColliding);
 		dText.set(sss);
 	}
+
 	displayConnections(project);
 	Footprint.rend.addToDraw(renderer.renderList);
-	drawTmpTrace();
+	drawTmpTrace(tmpTrace,traceRend);
 	project.grid.addToDraw(renderer.renderList);
 	foreach (tr; project.traces)
 		tr.addToDraw(renderer.renderList);

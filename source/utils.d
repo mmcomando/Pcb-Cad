@@ -153,13 +153,14 @@ unittest {
 import objects;
 import std.array;
 
-bool traceCollide(Trace a, Trace b, ref vec2[2] closestPoints) {
+bool traceCollide(Trace aaa, Trace bbb, ref vec2[2] closestPoints) {
 	vec2[2][] linesATrace;
 	vec2[2][] linesBTrace;
 
-	linesATrace = uninitializedArray!(vec2[2][])(a.points.length - 1);
-	linesBTrace = uninitializedArray!(vec2[2][])(b.points.length - 1);
-
+	linesATrace = uninitializedArray!(vec2[2][])(aaa.polyLine.points.length - 1);
+	linesBTrace = uninitializedArray!(vec2[2][])(bbb.polyLine.points.length - 1);
+	auto a=aaa.polyLine;
+	auto b=bbb.polyLine;
 	for (int i = 1; i < a.points.length; i++) {
 		linesATrace[i - 1] = [a.points[i - 1], a.points[i]];
 	}
@@ -196,9 +197,9 @@ float minimum_distance(vec2 v, vec2 w, vec2 p) {
 }
 
 bool traceCollideWithPoint(Trace trace, vec2 point) {
-	for (int i = 1; i < trace.points.length; i++) {
-		float qLength = minimum_distance(trace.points[i - 1], trace.points[i], point);
-		if (qLength < trace.traceWidth) {
+	for (int i = 1; i < trace.polyLine.points.length; i++) {
+		float qLength = minimum_distance(trace.polyLine.points[i - 1], trace.polyLine.points[i], point);
+		if (qLength < trace.polyLine.traceWidth) {
 			return true;
 		}
 	}
@@ -218,13 +219,14 @@ bool traceCollideWithPad(Trace trace, Footprint footprint, uint shapeID) {
 			minDistance=shape.shape.get!(shapes.Circle).radius;
 			break;
 		case shape.shape.Types.Triangle:
+		case shape.shape.Types.PolyLine:
 			assert(0);
 		case shape.shape.Types.none:
 			assert(0);
 	}
-	minDistance=minDistance*minDistance+trace.traceWidth*trace.traceWidth;
-	for (int i = 1; i < trace.points.length; i++) {
-		float qLength = minimum_distance(trace.points[i - 1], trace.points[i], point);
+	minDistance=minDistance*minDistance+trace.polyLine.traceWidth*trace.polyLine.traceWidth;
+	for (int i = 1; i < trace.polyLine.points.length; i++) {
+		float qLength = minimum_distance(trace.polyLine.points[i - 1], trace.polyLine.points[i], point);
 		if (qLength < minDistance) {
 			return true;
 		}

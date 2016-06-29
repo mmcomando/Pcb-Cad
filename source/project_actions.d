@@ -29,7 +29,7 @@ float traceWidth = 0.001;
 vec2 grabbedDT;
 void update(PcbProject proj, vec2 globalMousePos) {
 	if (tmpTrace !is null) {
-		tmpTrace.traceWidth=traceWidth;
+		tmpTrace.polyLine.traceWidth=traceWidth;
 	}
     snapEnabled = true;
     if (grabbed !is null || tmpTrace !is null)
@@ -129,8 +129,8 @@ void addTrace(PcbProject proj, vec2 globalMousePos) {
     if (tmpTrace is null) {
         if (gameEngine.window.keyPressed('l')) {
             tmpTrace = new Trace(traceWidth);
-            tmpTrace.points ~= globalMousePos;
-            tmpTrace.points ~= globalMousePos + vec2(0.01, 0.05);
+            tmpTrace.polyLine.points ~= globalMousePos;
+            tmpTrace.polyLine.points ~= globalMousePos + vec2(0.01, 0.05);
             string connName = traceCollideWithSomethingInProject(proj, tmpTrace);
             if (!connName.empty) {
                 tmpTrace.connection = connName;
@@ -138,6 +138,7 @@ void addTrace(PcbProject proj, vec2 globalMousePos) {
             writeln("My name is: ", tmpTrace.connection);
         }
     } else {
+		auto tmpTrace=&tmpTrace.polyLine;
         if (gameEngine.window.keyPressed('l')) {
             tmpTrace.points ~= globalMousePos;
         }
@@ -191,9 +192,9 @@ void addTraceDifferent(PcbProject proj, vec2 globalMousePos) {
         if (gameEngine.window.keyPressed('l')) {
             normal = true;
             tmpTrace = new Trace(traceWidth);
-            tmpTrace.points ~= globalMousePos;
-            tmpTrace.points ~= globalMousePos + vec2(0.00, 0.05);
-            tmpTrace.points ~= globalMousePos + vec2(0.01, 0.05) * 2;
+            tmpTrace.polyLine.points ~= globalMousePos;
+            tmpTrace.polyLine.points ~= globalMousePos + vec2(0.00, 0.05);
+            tmpTrace.polyLine.points ~= globalMousePos + vec2(0.01, 0.05) * 2;
             string connName = traceCollideWithSomethingInProject(proj, tmpTrace);
             if (!connName.empty) {
                 tmpTrace.connection = connName;
@@ -201,6 +202,7 @@ void addTraceDifferent(PcbProject proj, vec2 globalMousePos) {
             writeln("My name is: ", tmpTrace.connection);
         }
     } else {
+		auto tmpTrace=&tmpTrace.polyLine;
         if (gameEngine.window.keyPressed('j'))
             normal = !normal;
         if (gameEngine.window.keyPressed('l')) {
@@ -300,11 +302,11 @@ void snapMouse(PcbProject proj, vec2 globalMousePos) {
     }
 }
 
-void drawTmpTrace() {
+void drawTmpTrace(Trace tmpTrace,Something traceRend) {
     if (tmpTrace !is null) {
         if (traceRend !is null)
             Something.remove(traceRend);
-        traceRend = Something.fromPoints(tmpTrace.getTrianglePoints);
+        traceRend = Something.fromPoints(tmpTrace.polyLine.getTriangles);
 		traceRend.trf.pos = vec2(0, 0);
         traceRend.color = vec3(1, 0, 0);
         traceRend.mode = GL_TRIANGLES;

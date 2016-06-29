@@ -135,7 +135,7 @@ void displayConnections(PcbProject proj) {
             return rotateVector(padPos, f.trf.rot) + a.footprint.trf.pos;
         }
         auto padPoints = conn.pads.map!getPos();
-        auto tracePoints = conn.traces.map!("a.points").joiner; //.take(1)
+        auto tracePoints = conn.traces.map!("a.polyLine.points").joiner; //.take(1)
         //padPoints.each!writeln;
         return chain(padPoints, tracePoints);
 
@@ -349,19 +349,18 @@ class RemoveFootprint : Action {
 
 class Trace {
     string connection;
-    vec2[] points;
     Something rendPoints;
     Circles rendWheels;
-    float traceWidth;
+	PolyLine polyLine;
     this(float traceWidth) {
-        this.traceWidth = traceWidth;
+        this.polyLine.traceWidth = traceWidth;
     }
 
     void init() {
-        vec2[] trianglePoints = getTrianglePoints();
+		Triangle[] trianglePoints = polyLine.getTriangles();
         Circles.CircleData[] metas;
-        foreach (p; points) {
-            metas ~= Circles.CircleData(vec3(1, 0, 0), p, traceWidth / 2);
+        foreach (p; polyLine.points) {
+            metas ~= Circles.CircleData(vec3(1, 0, 0), p, polyLine.traceWidth / 2);
         }
         rendWheels = Circles.addCircles(metas, true);
         rendWheels.trf.pos = vec2(0, 0);
@@ -376,26 +375,6 @@ class Trace {
         list.add(rendWheels, Priority(18));
     }
 
-    vec2[] getTrianglePoints() {
-        vec2 last = points[0];
-        vec2[] trianglePoints;
-        foreach (p; points[1 .. $]) {
-            vec2 normal = (p - last).normalized();
-            vec2 tangent = vec2(normal.y, -normal.x) * traceWidth / 2;
-            vec2 v1 = last + tangent;
-            vec2 v2 = p + tangent;
-            vec2 v3 = p - tangent;
-            vec2 v4 = last - tangent;
-            trianglePoints ~= v1;
-            trianglePoints ~= v2;
-            trianglePoints ~= v4;
-            trianglePoints ~= v4;
-            trianglePoints ~= v2;
-            trianglePoints ~= v3;
-            last = p;
-        }
-        return trianglePoints;
-    }
 }
 
 class FootprintsLibrary {
