@@ -52,16 +52,18 @@ private FootprintData fromKicadFootprint(ki_mod.Module md) {
         case PADType.SMD:
         case PADType.CONN:
         case PADType.N:
-            p.type = PadType.SMD;
+            //p.type = PadType.SMD;
             break;
 
         case PADType.HOLE:
         case PADType.STD:
-            p.type = PadType.THT;
+            //p.type = PadType.THT;
             break;
         }
         TrShape shape;
-        shape.trf.pos = p1;
+		Transform trf;
+		trf.pos=p1;
+		shape.trf=trf;
         ft.snapPoints ~= p1;
         final switch (ob.sh.padShape) {
 

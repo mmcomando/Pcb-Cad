@@ -55,13 +55,15 @@ struct ConnectionsManager {
                 if (conn.name != trace.connection)
                     continue;
                 foreach (tr; conn.traces) {
-                    if (traceCollide(trace, tr, closestPoints)) {
+					//if (traceCollide(Transform(),Transform(),trace.polyLine, tr.polyLine)) {
+						if (traceCollide(trace, tr, closestPoints)) {
                         conn.traces ~= trace;
                         return;
                     }
                 }
                 foreach (pad_id; conn.pads) {
-                    if (traceCollideWithPad(trace, pad_id.footprint, pad_id.padNum)) {
+					TrShape trShape=pad_id.footprint.f.shapes[pad_id.padNum];
+					if (collideUniversal(Transform(),pad_id.footprint.trf*trShape.trf,trace.polyLine,trShape.shape)) {
                         conn.traces ~= trace;
                         return;
                     }
@@ -71,13 +73,15 @@ struct ConnectionsManager {
             vec2[2] closestPoints;
             foreach (ref conn; connections) {
                 foreach (tr; conn.traces) {
+					//if (traceCollide(Transform(),Transform(),trace.polyLine, tr.polyLine)) {
                     if (traceCollide(trace, tr, closestPoints)) {
                         conn.traces ~= trace;
                         return;
                     }
                 }
                 foreach (pad_id; conn.pads) {
-                    if (traceCollideWithPad(trace, pad_id.footprint, pad_id.padNum)) {
+					TrShape trShape=pad_id.footprint.f.shapes[pad_id.padNum];
+					if (collideUniversal(Transform(),pad_id.footprint.trf*trShape.trf,trace.polyLine,trShape.shape)) {
                         conn.traces ~= trace;
                         return;
                     }
@@ -198,9 +202,10 @@ void displayTraceConnections(PcbProject proj) {
     foreach (traceA; proj.traces) {
         foreach (traceB; proj.traces) {
             vec2[2] closestPoints;
+			//if (!traceCollide(Transform(),Transform(),traceA.polyLine, traceB.polyLine)) {
             if (!traceCollide(traceA, traceB, closestPoints)) {
                 //writeln("--");
-                lines ~= [closestPoints[0], closestPoints[1]];
+				lines ~= [traceA.polyLine.points[0], traceB.polyLine.points[0]];
 
             }
         }
@@ -302,7 +307,7 @@ class PcbProject {
 
     Trace getTrace(vec2 pos) {
         foreach (i, t; traces) {
-            if (traceCollideWithPoint(t, pos)) {
+            if (collide(Transform(),&t.polyLine, pos)) {
                 return t;
             }
         }
@@ -388,7 +393,7 @@ class FootprintsLibrary {
     FootprintData[] footprints;
 }
 
-//TODO component system?? move->event->move rendering??
+//TODO event system?? move->event->move rendering??
 class Footprint {
     static FootprintRenderer rend;
     FootprintRenderer.Data rendData;
@@ -437,11 +442,6 @@ class Footprint {
 }
 
 
-// ALmost everything from here is to be redone: pads,shape system
-enum PadType {
-    SMD,
-    THT
-}
 
 
 
@@ -449,8 +449,6 @@ enum PadType {
 struct Pad {
     string connection;
     uint shapeID;
-    PadType type;
-    //uint wireID;
 }
 
 struct TrShape {
@@ -461,13 +459,19 @@ struct TrCircle {
 	Transform trf;
 	Circle circle;
 }
+struct TrRectangle {
+	Transform trf;
+	Rectangle rectangle;
+}
 
 
 
 class FootprintData {
     string name;
     Pad[] pads;
-    TrShape[] shapes;
+	TrShape[] shapes;
+	TrCircle[] shapesCircle;
+	TrRectangle[] shapesRectangle;
     vec2[] points;
     vec2[2][] lines;
     TrCircle[] trCircles;
@@ -476,6 +480,18 @@ class FootprintData {
     vec2[2] boundingBox;
     this() {
     }
+	void addShape(TrShape trShape){
+		switch(trShape.shape.currentType){
+			case trShape.shape.Types.Rectangle:
+				shapesRectangle~=TrRectangle(trShape.trf,*trShape.shape.get!Rectangle);
+				break;
+			case trShape.shape.Types.Circle:
+				shapesCircle~=TrCircle(trShape.trf,*trShape.shape.get!Circle);
+				break;
+			default:
+				shapes~=trShape;
+		}
+	}
 
     this(FootprintData f) {
 

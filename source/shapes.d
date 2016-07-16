@@ -254,7 +254,7 @@ bool collide(Transform tr,Circle* c,vec2 p){
 		return false;
 	}
 }
-//scale rot
+//scale
 bool collide(Transform trAA,Transform trBB,Rectangle* rAA,Rectangle* rBB){
 
 	static bool collideAB(Transform trA,Transform trB,Rectangle* rA,Rectangle* rB){
@@ -292,6 +292,8 @@ bool collide(Transform trAA,Transform trBB,Rectangle* rAA,Rectangle* rBB){
 	return false;
 
 }
+
+
 bool collide(Transform tr,Rectangle* r,vec2 p){
 	vec2 half = r.wh / 2;
 	vec2 minn = tr.pos - half;
@@ -308,6 +310,15 @@ bool collide(Transform transform,AnyShape* shape,vec2 p){
 	Triangle[] triangles=shape.getTriangles();
 	foreach(tr;triangles){
 		if(pointInTriangle(tr,p)){
+			return true;
+		}
+	}
+	return false;
+}
+bool collide(Transform transform,PolyLine* polyLine, vec2 point) {
+	for (int i = 1; i < polyLine.points.length; i++) {
+		float qLength = minimum_distance(polyLine.points[i - 1], polyLine.points[i], point);
+		if (qLength < polyLine.traceWidth) {
 			return true;
 		}
 	}
@@ -380,4 +391,18 @@ bool triangleTtiangle(Triangle t1,Triangle t2){
 	if (inTri) return true;
 	
 	return false;
+}
+
+/////
+///helper functions
+
+
+//from internet
+float minimum_distance(vec2 v, vec2 w, vec2 p) {
+	const float l2 = (v - w).length_squared;
+	if (l2 == 0.0)
+		return (p - v).length_squared; 
+	const float t = max(0, min(1, dot(p - v, w - v) / l2));
+	const vec2 projection = v + t * (w - v); 
+	return (p - projection).length_squared;
 }

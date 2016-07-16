@@ -74,7 +74,7 @@ struct Transform{
 	float rot=0;
 	float scale=1;
 
-	Transform opBinary(string op)(Transform r)
+	Transform opBinary(string op)(Transform r) const
 	{
 		static if (op != "*")static assert(0, "Operator "~op~" not implemented");
 		alias c = cos;
@@ -186,53 +186,8 @@ bool traceCollide(Trace aaa, Trace bbb, ref vec2[2] closestPoints) {
 	return false;
 
 }
-//from internet
-float minimum_distance(vec2 v, vec2 w, vec2 p) {
-	const float l2 = (v - w).length_squared;
-	if (l2 == 0.0)
-		return (p - v).length_squared; 
-	const float t = max(0, min(1, dot(p - v, w - v) / l2));
-	const vec2 projection = v + t * (w - v); 
-	return (p - projection).length_squared;
-}
 
-bool traceCollideWithPoint(Trace trace, vec2 point) {
-	for (int i = 1; i < trace.polyLine.points.length; i++) {
-		float qLength = minimum_distance(trace.polyLine.points[i - 1], trace.polyLine.points[i], point);
-		if (qLength < trace.polyLine.traceWidth) {
-			return true;
-		}
-	}
-	return false;
-}
-//TODO do it properly
-bool traceCollideWithPad(Trace trace, Footprint footprint, uint shapeID) {
-	TrShape shape = footprint.f.shapes[shapeID];
-	vec2 point = footprint.trf.pos + rotateVector(shape.trf.pos, footprint.trf.rot);
-	float minDistance;
-	final switch(shape.shape.currentType){
-		case shape.shape.Types.Rectangle:
-			auto rec=shape.shape.get!Rectangle;
-			minDistance=min(rec.wh.x,rec.wh.y);
-			break;
-		case shape.shape.Types.Circle: 
-			minDistance=shape.shape.get!(shapes.Circle).radius;
-			break;
-		case shape.shape.Types.Triangle:
-		case shape.shape.Types.PolyLine:
-			assert(0);
-		case shape.shape.Types.none:
-			assert(0);
-	}
-	minDistance=minDistance*minDistance+trace.polyLine.traceWidth*trace.polyLine.traceWidth;
-	for (int i = 1; i < trace.polyLine.points.length; i++) {
-		float qLength = minimum_distance(trace.polyLine.points[i - 1], trace.polyLine.points[i], point);
-		if (qLength < minDistance) {
-			return true;
-		}
-	}
-	return false;
-}
+
 //for build in arrays
 void removeInPlace(R, N)(ref R haystack, N index)
 {

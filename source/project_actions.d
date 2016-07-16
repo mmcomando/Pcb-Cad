@@ -16,6 +16,7 @@ import engine.renderer;
 import engine.window;
 import gui_data;
 import drawables;
+import shapes;
 
 Trace tmpTrace;
 
@@ -101,23 +102,29 @@ void addFootprint(PcbProject proj, vec2 globalMousePos) {
 
 private string traceCollideWithSomethingInProject(PcbProject proj, Trace trace, string ignore = "") {
     vec2[2] closestPoints;
-    foreach (tr; proj.traces) {
-        if (traceCollide(trace, tr, closestPoints)) {
-            string name = tr.connection;
-            if (name == ignore) {
-                continue;
-            }
-            writeln("trace: ", name);
+	writeln("traceCollideWithSomethingInProject");
+	writefln("traces: %d, footprints: %d",proj.traces.length,proj.footprints.length);
+    foreach (i,tr; proj.traces) {
+		string name = tr.connection;
+		if (name == ignore) {
+			continue;
+		}
+		if (collideUniversal(Transform(),Transform(),trace.polyLine, tr.polyLine)) {
+        //if (traceCollide(trace, tr, closestPoints)) {
+           
+            writeln("colide with trace: ", name, " num: ",i);
             return name;
         }
     }
     foreach (ff; proj.footprints) {
         foreach (pNum, pad; ff.f.pads) {
-            if (traceCollideWithPad(trace, ff, pad.shapeID)) {
-                string name = ff.padConnections[pNum];
-                if (name == ignore)
-                    continue;
-                writeln("pad: ", name);
+			string name = ff.padConnections[pNum];
+			if (name == ignore)
+				continue;
+			TrShape trShape=ff.f.shapes[pad.shapeID];
+			if (collideUniversal(Transform(),trShape.trf*ff.trf,trace.polyLine,trShape.shape)) {
+               
+				writeln("colide with  pad: ", name);
                 return name;
             }
         }

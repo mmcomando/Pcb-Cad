@@ -79,7 +79,6 @@ void init() {
 	traceB.points~=vec2(0.000,0.000);
 	traceB.points~=vec2(0.01,0.01);
 	traceB.points~=vec2(0.01,0.02);
-	writeln(traceA.getTriangles);
 	//somShapeA.set(Rectangle(vec2(0.004,0.004)));
 	//somShapeB.set(Rectangle(vec2(0.02,0.02)));
 	somShapeA.set(traceA);
@@ -102,9 +101,9 @@ void init() {
 	}
 	int perRow = 16;
 	int i = 0;
-	foreach (ii; 0 .. 1)
+	foreach (ii; 0 .. 3)
 	foreach (lib; project.footprintsLibraries) {
-		foreach (libF; lib.footprints) {
+		foreach (libF; lib.footprints[0..$]) {
 			Footprint f = new Footprint(libF);
 			project.addFootprint(f);
 			f.trf =Transform( vec2(i % perRow, i / perRow) * 0.04,0,1);
