@@ -39,49 +39,41 @@ private FootprintData fromKicadFootprint(ki_mod.Module md) {
     foreach (uint i, ref ob; md.pads) {
 		vec2 p1 = vec2(ob.po.x, ob.po.y)*SC;
 		vec2 p2 = vec2(ob.sh.sizex, ob.sh.sizey)*SC;
-        Pad p;
-        //p.pos=p1;
         ft.snapPoints ~= p1;
+
+		string connection;
         ob.ne.connection = ob.ne.connection.strip('"');
         if (ob.ne.connection.length > 0 && ob.ne.connection[0] != 'N')
-            p.connection = ob.ne.connection;
+            connection = ob.ne.connection;
         else
-            p.connection = "?";
-        //p.wireID=i;
+            connection = "?";
         final switch (ob.at.padType) {
         case PADType.SMD:
         case PADType.CONN:
         case PADType.N:
-            //p.type = PadType.SMD;
             break;
 
         case PADType.HOLE:
         case PADType.STD:
-            //p.type = PadType.THT;
             break;
         }
         TrShape shape;
-		Transform trf;
-		trf.pos=p1;
-		shape.trf=trf;
+		shape.trf.pos=p1;
         ft.snapPoints ~= p1;
         final switch (ob.sh.padShape) {
 
         case PADShape.R:
 			Rectangle rec=Rectangle(p2);
 			shape.shape.set(rec);
-            ft.shapes ~= shape;
-			p.shapeID = cast(uint) ft.shapes.length - 1;
+			ft.addShape(shape,connection);
             break;
         case PADShape.T:
         case PADShape.O:
         case PADShape.C:
 			shapes.Circle cc=shapes.Circle(max(min(p2.x, p2.y), 0.0001));
 			shape.shape.set(cc);
-			ft.shapes ~= shape;
-			p.shapeID = cast(uint) ft.shapes.length - 1;
+			ft.addShape(shape,connection);
         }
-        ft.pads ~= p;
 
     }
     ft.name = md.name;

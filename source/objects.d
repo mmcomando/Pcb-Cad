@@ -21,19 +21,19 @@ import shapes;
 
 struct PadID {
     Footprint footprint;
-    uint padNum;
+	uint shapeNum;//only rectangles
 }
 
 struct ConnectionsManager {
     Connection[] connections;
     void add(Footprint footprint) {
-        foreach (uint padNum, conName; footprint.padConnections) {
+        foreach (uint shapeNum, conName; footprint.f.shapeRectangleConnection) {
             if (conName.empty || conName == "?")
                 continue;
 
             Connection con;
             con.name = conName;
-            con.pads ~= PadID(footprint, padNum);
+			con.pads ~= PadID(footprint, shapeNum);
             connections ~= con;
         }
     }
@@ -62,8 +62,8 @@ struct ConnectionsManager {
                     }
                 }
                 foreach (pad_id; conn.pads) {
-					TrShape trShape=pad_id.footprint.f.shapes[pad_id.padNum];
-					if (collideUniversal(Transform(),pad_id.footprint.trf*trShape.trf,trace.polyLine,trShape.shape)) {
+					TrRectangle trShape=pad_id.footprint.f.shapesRectangle[pad_id.shapeNum];
+					if (collideUniversal(Transform(),pad_id.footprint.trf*trShape.trf,trace.polyLine,trShape.rectangle)) {
                         conn.traces ~= trace;
                         return;
                     }
@@ -80,7 +80,7 @@ struct ConnectionsManager {
                     }
                 }
                 foreach (pad_id; conn.pads) {
-					TrShape trShape=pad_id.footprint.f.shapes[pad_id.padNum];
+					TrShape trShape=pad_id.footprint.f.shapes[pad_id.shapeNum];
 					if (collideUniversal(Transform(),pad_id.footprint.trf*trShape.trf,trace.polyLine,trShape.shape)) {
                         conn.traces ~= trace;
                         return;
@@ -115,7 +115,7 @@ struct Connection {
     Trace[] traces;
 }
 
-void addRandomConnections(PcbProject proj) {
+/*void addRandomConnections(PcbProject proj) {
     import std.random : uniform;
 
     immutable connections = ["GND", "?", "Vcc", "sens1", "sens2"];
@@ -129,13 +129,13 @@ void addRandomConnections(PcbProject proj) {
             f.padConnections[uniform(0, f.padConnections.length)] = connections[uniform(0, connections.length)];
         }
     }
-}
+}*/
 
 void displayConnections(PcbProject proj) {
     auto getPoints(Connection* conn) {
         static vec2 getPos(T)(T a) {
             Footprint f = a.footprint;
-            vec2 padPos = f.f.shapes[f.f.pads[a.padNum].shapeID].trf.pos;
+			vec2 padPos = f.f.shapesRectangle[a.shapeNum].trf.pos;
             return rotateVector(padPos, f.trf.rot) + a.footprint.trf.pos;
         }
         auto padPoints = conn.pads.map!getPos();
@@ -313,6 +313,37 @@ class PcbProject {
         }
         return null;
     }
+
+	string collideWithConnection(Transform trf, AnyShape shape, string ignore = "") {
+		writeln("traceCollideWithSomethingInProject");
+		writefln("traces: %d, footprints: %d",traces.length,footprints.length);
+		foreach (i,tr; traces) {
+			string name = tr.connection;
+			if (name == ignore) {
+				continue;
+			}
+			//if (collideUniversal(Transform(),Transform(),trace.polyLine, tr.polyLine)) {
+			if (collideUniversal(Transform(),trf,tr.polyLine, shape)) {
+				writeln("colide with trace: ", name, " num: ",i);
+				return name;
+			}
+		}
+		foreach (ff; footprints) {
+			foreach (name, trShape; lockstep(ff.f.shapeRectangleConnection, ff.f.shapesRectangle)) {
+				//foreach (pNum, pad; ff.f.shapesRectangle) {
+				//string name = ff.padConnections[pNum];
+				if (name == ignore)
+					continue;
+				//TrShape trShape=ff.f.shapes[pad.shapeID];
+				if (collideUniversal(trf,trShape.trf*ff.trf,shape,trShape.rectangle)) {
+					
+					writeln("colide with  pad: ", name);
+					return name;
+				}
+			}
+		}
+		return "";
+	}
 }
 
 class TransformFootprint : Action {
@@ -397,10 +428,10 @@ class FootprintsLibrary {
 class Footprint {
     static FootprintRenderer rend;
     FootprintRenderer.Data rendData;
-    const FootprintData f;
+    FootprintData f;
 	Transform _trf;
     string name;
-    string[] padConnections;
+   // string[] padConnections;
 
 	void trf(Transform t) {
 		_trf = t;
@@ -416,9 +447,9 @@ class Footprint {
             rend = new FootprintRenderer;
         this.f = f;
 		//rendData = rend.addFootprint(this);
-        padConnections.length = f.pads.length;
-        foreach (i, ref p; padConnections)
-            p = f.pads[i].connection;
+        //padConnections.length = f.pads.length;
+       // foreach (i, ref p; padConnections)
+        //    p = f.pads[i].connection;
     }
 	void addToDraw() {
 		rendData = rend.addFootprint(this);
@@ -468,10 +499,17 @@ struct TrRectangle {
 
 class FootprintData {
     string name;
-    Pad[] pads;
+   // Pad[] pads;
+
+	//shapes
 	TrShape[] shapes;
 	TrCircle[] shapesCircle;
 	TrRectangle[] shapesRectangle;
+	//and theirs connection (array indexes had to match)
+	string[] shapeConnection;
+	string[] shapeCircleConnection;
+	string[] shapeRectangleConnection;
+
     vec2[] points;
     vec2[2][] lines;
     TrCircle[] trCircles;
@@ -480,24 +518,36 @@ class FootprintData {
     vec2[2] boundingBox;
     this() {
     }
-	void addShape(TrShape trShape){
+	void addShape(TrShape trShape,string connection){
 		switch(trShape.shape.currentType){
 			case trShape.shape.Types.Rectangle:
 				shapesRectangle~=TrRectangle(trShape.trf,*trShape.shape.get!Rectangle);
+				shapeRectangleConnection~=connection;
 				break;
 			case trShape.shape.Types.Circle:
 				shapesCircle~=TrCircle(trShape.trf,*trShape.shape.get!Circle);
+				shapeCircleConnection~=connection;
 				break;
 			default:
 				shapes~=trShape;
+				shapeConnection~=connection;
+				assert(shapes.length==shapeConnection.length);
 		}
+		assert(shapes.length==shapeConnection.length);
+		assert(shapesRectangle.length==shapeRectangleConnection.length);
+		assert(shapesCircle.length==shapeCircleConnection.length);
 	}
 
-    this(FootprintData f) {
 
+    this(FootprintData f) {
         name = f.name;
-        pads = f.pads.dup;
-        shapes = f.shapes.dup;
+        //pads = f.pads.dup;
+		shapes = f.shapes.dup;
+		shapesCircle = f.shapesCircle.dup;
+		shapesRectangle = f.shapesRectangle.dup;
+		shapeConnection = f.shapeConnection.dup;
+		shapeCircleConnection = f.shapeCircleConnection.dup;
+		shapeRectangleConnection = f.shapeRectangleConnection.dup;
         points = f.points.dup;
         lines = f.lines.dup;
         trCircles = f.trCircles.dup;

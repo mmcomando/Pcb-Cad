@@ -4,6 +4,7 @@ import std.math : PI_4, sqrt;
 import std.stdio : writeln;
 import std.algorithm : find;
 import std.array : empty;
+import std.range : lockstep;
 import gl3n.linalg;
 
 import derelict.opengl3.gl3;
@@ -99,38 +100,6 @@ void addFootprint(PcbProject proj, vec2 globalMousePos) {
 
     }
 }
-
-private string traceCollideWithSomethingInProject(PcbProject proj, Trace trace, string ignore = "") {
-    vec2[2] closestPoints;
-	writeln("traceCollideWithSomethingInProject");
-	writefln("traces: %d, footprints: %d",proj.traces.length,proj.footprints.length);
-    foreach (i,tr; proj.traces) {
-		string name = tr.connection;
-		if (name == ignore) {
-			continue;
-		}
-		if (collideUniversal(Transform(),Transform(),trace.polyLine, tr.polyLine)) {
-        //if (traceCollide(trace, tr, closestPoints)) {
-           
-            writeln("colide with trace: ", name, " num: ",i);
-            return name;
-        }
-    }
-    foreach (ff; proj.footprints) {
-        foreach (pNum, pad; ff.f.pads) {
-			string name = ff.padConnections[pNum];
-			if (name == ignore)
-				continue;
-			TrShape trShape=ff.f.shapes[pad.shapeID];
-			if (collideUniversal(Transform(),trShape.trf*ff.trf,trace.polyLine,trShape.shape)) {
-               
-				writeln("colide with  pad: ", name);
-                return name;
-            }
-        }
-    }
-    return "";
-}
 /// Moves last point in trace
 void addTrace(PcbProject proj, vec2 globalMousePos) {
     if (tmpTrace is null) {
@@ -138,7 +107,9 @@ void addTrace(PcbProject proj, vec2 globalMousePos) {
             tmpTrace = new Trace(traceWidth);
             tmpTrace.polyLine.points ~= globalMousePos;
             tmpTrace.polyLine.points ~= globalMousePos + vec2(0.01, 0.05);
-            string connName = traceCollideWithSomethingInProject(proj, tmpTrace);
+			AnyShape sh;
+			sh.set(tmpTrace.polyLine);
+            string connName = proj.collideWithConnection(Transform(), sh);
             if (!connName.empty) {
                 tmpTrace.connection = connName;
             }
@@ -171,7 +142,9 @@ void addTrace(PcbProject proj, vec2 globalMousePos) {
         //tmpTrace.draw();
     }
     if (tmpTrace !is null) {
-        string connName = traceCollideWithSomethingInProject(proj, tmpTrace, tmpTrace.connection);
+		AnyShape sh;
+		sh.set(tmpTrace.polyLine);
+		string connName = proj.collideWithConnection(Transform(), sh,tmpTrace.connection);
         writeln(tmpTrace.connection, " vs ", connName);
 
         if (gameEngine.window.keyPressed('k') && tmpTrace !is null) {
@@ -202,7 +175,9 @@ void addTraceDifferent(PcbProject proj, vec2 globalMousePos) {
             tmpTrace.polyLine.points ~= globalMousePos;
             tmpTrace.polyLine.points ~= globalMousePos + vec2(0.00, 0.05);
             tmpTrace.polyLine.points ~= globalMousePos + vec2(0.01, 0.05) * 2;
-            string connName = traceCollideWithSomethingInProject(proj, tmpTrace);
+			AnyShape sh;
+			sh.set(tmpTrace.polyLine);
+			string connName = proj.collideWithConnection(Transform(), sh);
             if (!connName.empty) {
                 tmpTrace.connection = connName;
             }
@@ -250,7 +225,10 @@ void addTraceDifferent(PcbProject proj, vec2 globalMousePos) {
     }
 
     if (gameEngine.window.keyPressed('k') && tmpTrace !is null) {
-        string connName = traceCollideWithSomethingInProject(proj, tmpTrace, tmpTrace.connection);
+		
+	AnyShape sh;
+	sh.set(tmpTrace.polyLine);
+	string connName = proj.collideWithConnection(Transform(), sh,tmpTrace.connection);
 		writeln(tmpTrace.connection, " vs ", connName);
 
         if (connName.empty || connName == tmpTrace.connection) {

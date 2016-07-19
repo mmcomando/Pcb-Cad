@@ -99,42 +99,45 @@ class FootprintRenderer  {
 				trianglePoints~=[tr.p1+shape.trf.pos,tr.p2+shape.trf.pos,tr.p3+shape.trf.pos];
 			}
         }
+		foreach (shape; f.shapesCircle) {
+			Circle s=shape.circle;
+			Triangle[] tris=s.getTriangles();
+			foreach(tr;tris){
+				trianglePoints~=[tr.p1+shape.trf.pos,tr.p2+shape.trf.pos,tr.p3+shape.trf.pos];
+			}
+		}
+		foreach (shape; f.shapesRectangle) {
+			Rectangle s=shape.rectangle;
+			Triangle[] tris=s.getTriangles();
+			foreach(tr;tris){
+				trianglePoints~=[tr.p1+shape.trf.pos,tr.p2+shape.trf.pos,tr.p3+shape.trf.pos];
+			}
+		}
 		triangles = SomethingNoTransform.fromPoints(trianglePoints);
         d.r = Circles.addCircles(metas);
         d.r.trf =footprint.trf;
         triangles.color = vec3(0.9, 0, 0);
         triangles.mode = GL_TRIANGLES;
 
-		//pad's names
-		//foreach (name, pad; lockstep(footprint.padConnections, f.pads)) {
-		foreach ( pad; f.pads) {
-			Transform trf;
-			string name=pad.connection;
+		//TODO pad's names only for rectangles
+		foreach (name, sh; lockstep(f.shapeRectangleConnection, f.shapesRectangle)) {
             if (name == "?" || name == "")
                 continue;
+
+			Transform trf;
             auto data = Text.fromString(name);
-			TrShape sh = footprint.f.shapes[pad.shapeID];
             data.trf=footprint.trf;
 			data.trf.pos=vec2(0,0);
 			trf.rot=data.trf.rot = 0;
 			trf.pos=sh.trf.pos;
-            if (sh.shape.currentType == AnyShape.Types.Rectangle) {
-				Rectangle* rec=sh.shape.get!Rectangle;
-				data.trf.scale =rec.wh.y;
-				if(rec.wh.x < rec.wh.y){
-					trf.rot+= 3.14 / 2;
-					data.trf.scale =rec.wh.x;
-				}
-			}else if (sh.shape.currentType == AnyShape.Types.Circle) {
-				Rectangle* rec=sh.shape.get!Rectangle;
-				data.trf.scale =rec.wh.y;
-				if(rec.wh.x < rec.wh.y){
-					trf.rot+= 3.14 / 2;
-					data.trf.scale =rec.wh.x;
-				}
-			}else{
-				assert(0);
+			//text rotation 
+			vec2 wh=sh.rectangle.wh;
+			data.trf.scale =wh.y;
+			if(wh.x < wh.y){
+				trf.rot+= 3.14 / 2;
+				data.trf.scale =wh.x;
 			}
+		
 			trf.scale =data.trf.scale;
             d.texts ~= TextPos(data,trf);
 

@@ -19,12 +19,18 @@ struct Triangle{
 	vec2 p1;
 	vec2 p2;
 	vec2 p3;
-	Triangle[] getTriangles(){
-		return [Triangle(p1,p2,p3)];
-	}
 	vec2[] getPoints(){
 		return [p1,p2,p3];
 	}
+	CC getBoundingCircle(){
+		return makeCircumcircle(p1,p2,p3);
+	}
+	Triangle[] getTriangles(){
+		return [Triangle(p1,p2,p3)];
+	}
+
+
+
 }
 struct Rectangle {
 	vec2 wh;
@@ -35,6 +41,10 @@ struct Rectangle {
 		vec2 v33 = vec2(half.x, -half.y);
 		vec2 v44 = -half;
 		return [v11,v22,v33,v33,v11,v44];
+	}
+	CC getBoundingCircle(){
+		vec2 wh2=wh/2;
+		return CC(vec2(0,0),wh2.x*wh2.x+wh2.y*wh2.y);
 	}
 	Triangle[] getTriangles(){
 		vec2 half = wh / 2;
@@ -47,6 +57,9 @@ struct Rectangle {
 }
 struct Circle {
 	float radius;
+	CC getBoundingCircle(){
+		return CC(vec2(0,0),radius*radius);
+	}
 	Triangle[] getTriangles() {
 		vec2[] points = getPointsOnCircle(vec2(0, 0), radius,16);
 		Triangle[] triangles=uninitializedArray!(Triangle[])(points.length);
@@ -63,6 +76,12 @@ struct PolyLine {
 	vec2[] points;
 	float traceWidth;
 
+	CC getBoundingCircle(){
+		CC c=smallestEnclosingCircle(points);
+		float d=sqrt(c.r)+traceWidth/2;
+		c.r=d*d;
+		return c;
+	}
 	//TODO no corners
 	Triangle[] getTriangles() {
 		vec2 last = points[0];
@@ -143,6 +162,19 @@ struct AnyShapeTemplate(ShapeTypes...) {
 			case Types.PolyLine:
 				return get!(PolyLine).getTriangles();
 			case Types.none:return [];
+		}
+	}
+	CC getBoundingCircle(){
+		final switch(currentType){
+			case Types.Rectangle:
+				return get!(Rectangle).getBoundingCircle();
+			case Types.Circle:
+				return get!(Circle).getBoundingCircle();
+			case Types.Triangle:
+				return get!(Triangle).getBoundingCircle();
+			case Types.PolyLine:
+				return get!(PolyLine).getBoundingCircle();
+			case Types.none:return CC();
 		}
 	}
 
@@ -227,9 +259,6 @@ bool collide(Transform trA,Transform trB,Triangle[] trianglesA,Triangle[] triang
 			triB.p2 = dtRotated + rotateVector(triB.p2,trB.rot-trA.rot);
 			triB.p3 = dtRotated + rotateVector(triB.p3,trB.rot-trA.rot);
 
-			//triB.p1+=dt;
-			//triB.p2+=dt;
-			//triB.p3+=dt;
 			if(triangleTtiangle(triA,triB)){
 				return true;
 			}
@@ -318,17 +347,11 @@ bool collide(Transform transform,AnyShape* shape,vec2 p){
 bool collide(Transform transform,PolyLine* polyLine, vec2 point) {
 	for (int i = 1; i < polyLine.points.length; i++) {
 		float qLength = minimum_distance(polyLine.points[i - 1], polyLine.points[i], point);
-		if (qLength < polyLine.traceWidth) {
+		if (qLength < polyLine.traceWidth) {//TODO FIX?
 			return true;
 		}
 	}
 	return false;
-}
-bool collide(Transform trA,Transform trB,Circle* c,Rectangle* r){
-	return true;
-}
-bool collide(Transform trA,Transform trB,Rectangle* r,Circle* c){
-	return collide(trA,trB,c,r);
 }
 
 
@@ -406,3 +429,72 @@ float minimum_distance(vec2 v, vec2 w, vec2 p) {
 	const vec2 projection = v + t * (w - v); 
 	return (p - projection).length_squared;
 }
+
+
+struct CC{
+	vec2 pos;
+	float r;
+}
+CC makeCircumcircle(vec2 p0,vec2  p1,vec2  p2) {
+	// Mathematical algorithm from Wikipedia: Circumscribed circle
+	float ax = p0.x, ay = p0.y;
+	float bx = p1.x, by = p1.y;
+	float cx = p2.x, cy = p2.y;
+	float d = (ax * (by - cy) + bx * (cy - ay) + cx * (ay - by)) * 2;
+	if (d == 0){
+		return CC();
+	}
+	float x = ((ax * ax + ay * ay) * (by - cy) + (bx * bx + by * by) * (cy - ay) + (cx * cx + cy * cy) * (ay - by)) / d;
+	float y = ((ax * ax + ay * ay) * (cx - bx) + (bx * bx + by * by) * (ax - cx) + (cx * cx + cy * cy) * (bx - ax)) / d;
+	vec2 xy=vec2(x,y);
+	return CC(xy,(xy-vec2(ax,ay)).length_squared);
+}
+CC makeDiameter(vec2 p0,vec2  p1) {
+	return CC((p0+p1)/2,((p0-p1)/2).length_squared);
+	//return CC((p0+p1)/2,0.0001);
+}
+bool contains(CC c,vec2 p){
+	return (c.pos-p).length_squared<=c.r;
+}
+bool contains(CC c,vec2[] ps){
+	foreach ( p ; ps) {
+		if (!c.contains(p))
+			return false;
+	}
+	return true;
+}
+
+
+
+CC smallestEnclosingCircle(vec2[] points) {
+	vec2 farestPoint(vec2[] points,vec2 point){
+		float maxDistance=0;
+		int index=0;
+		foreach(int i,p;points){
+			float qLength=(p-point).length_squared;
+			if(maxDistance<qLength){
+				maxDistance=qLength;
+				index=i;
+			}
+		}
+		return points[index];
+	}
+	vec2 pointA=farestPoint(points,points[0]);
+	vec2 pointB=farestPoint(points,pointA);
+
+
+	CC c=CC((pointA+pointB)/2,((pointA-pointB)/2).length_squared);
+	while(points.length!=0){
+		float dt=(c.pos-points[0]).length_squared-c.r;
+		if(dt>0){
+				c.r+=dt;
+		}
+		points=points[1..$];
+	}
+	return c;
+}
+
+
+
+/////////
+
