@@ -80,8 +80,8 @@ struct ConnectionsManager {
                     }
                 }
                 foreach (pad_id; conn.pads) {
-					TrShape trShape=pad_id.footprint.f.shapes[pad_id.shapeNum];
-					if (collideUniversal(Transform(),pad_id.footprint.trf*trShape.trf,trace.polyLine,trShape.shape)) {
+					TrRectangle trShape=pad_id.footprint.f.shapesRectangle[pad_id.shapeNum];
+					if (collideUniversal(Transform(),pad_id.footprint.trf*trShape.trf,trace.polyLine,trShape.rectangle)) {
                         conn.traces ~= trace;
                         return;
                     }
@@ -328,16 +328,15 @@ class PcbProject {
 				return name;
 			}
 		}
-		foreach (ff; footprints) {
-			foreach (name, trShape; lockstep(ff.f.shapeRectangleConnection, ff.f.shapesRectangle)) {
+		foreach (i,ff; footprints) {
+			foreach (j,name, trShape; lockstep(ff.f.shapeRectangleConnection, ff.f.shapesRectangle)) {
 				//foreach (pNum, pad; ff.f.shapesRectangle) {
 				//string name = ff.padConnections[pNum];
 				if (name == ignore)
 					continue;
 				//TrShape trShape=ff.f.shapes[pad.shapeID];
 				if (collideUniversal(trf,trShape.trf*ff.trf,shape,trShape.rectangle)) {
-					
-					writeln("colide with  pad: ", name);
+					writefln("colide with %s  pad(%s): %s", i,j, name);
 					return name;
 				}
 			}

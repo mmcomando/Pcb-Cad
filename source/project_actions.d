@@ -173,8 +173,8 @@ void addTraceDifferent(PcbProject proj, vec2 globalMousePos) {
             normal = true;
             tmpTrace = new Trace(traceWidth);
             tmpTrace.polyLine.points ~= globalMousePos;
-            tmpTrace.polyLine.points ~= globalMousePos + vec2(0.00, 0.05);
-            tmpTrace.polyLine.points ~= globalMousePos + vec2(0.01, 0.05) * 2;
+			tmpTrace.polyLine.points ~= globalMousePos + vec2(0.00, 0.05) * 0.001;
+            tmpTrace.polyLine.points ~= globalMousePos + vec2(0.01, 0.05) * 0.002;
 			AnyShape sh;
 			sh.set(tmpTrace.polyLine);
 			string connName = proj.collideWithConnection(Transform(), sh);

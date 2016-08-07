@@ -3,10 +3,12 @@
 import std.conv:to;
 import std.format:format;
 import std.array:uninitializedArray;
+import std.math:sqrt;
 
 import gl3n.linalg;
 
 import utils;
+
 
 void test(){
 	AnyShape A,B;
@@ -212,7 +214,14 @@ alias AnyShape=AnyShapeTemplate!(Rectangle,Circle,Triangle,PolyLine);
 
 //Collision functions
 
-bool collideUniversal(T1,T2)(Transform trA,Transform trB,T1 a ,T2 b){	
+bool collideUniversal(T1,T2)(Transform trA,Transform trB,T1 a ,T2 b){
+	CC circleA=a.getBoundingCircle();
+	CC circleB=b.getBoundingCircle();
+	vec2 dt=trB.pos-trA.pos+circleB.pos-circleA.pos;
+	float sum=sqrt(circleA.r)+sqrt(circleB.r);
+	if(dt.length_squared>sum*sum){
+		return false;
+	}
 	return collide(trA,trB,a.getTriangles,b.getTriangles);
 }
 
