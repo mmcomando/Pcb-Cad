@@ -8,6 +8,9 @@ version (window_gtk) {
 version (window_sdl) {
     import engine.window_sdl : WindowProvider = WindowSDL;
 }
+version (window_dlangui) {
+	import engine.window_dlangui : WindowProvider = WindowDlanGUI;
+}
 import core.memory;
 import std.datetime;
 import std.stdio : writefln;

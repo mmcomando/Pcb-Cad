@@ -1,14 +1,18 @@
 {
 	"fileVersion": 1,
 	"versions": {
-		"glamour": "1.0.1+commit.6.g50d28fb",
-		"kicad_loader": "~master",
 		"cerealed": "0.6.3",
-		"derelict-util": "2.0.4",
-		"unit-threaded": "0.5.9",
-		"gl3n": "1.3.1",
+		"derelict-ft": "1.1.2",
 		"derelict-gl3": "1.0.17",
 		"derelict-sdl2": "1.9.7",
-		"gtk-d": "3.2.1"
+		"derelict-util": "2.0.4",
+		"dlangui": "~master",
+		"dsfml": "2.1.1",
+		"gl3n": "1.3.1",
+		"glamour": "1.0.1+commit.6.g50d28fb",
+		"gtk-d": "3.2.1",
+		"kicad_loader": "~master",
+		"unit-threaded": "0.5.9",
+		"x11": "1.0.15"
 	}
 }

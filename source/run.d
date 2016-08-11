@@ -133,6 +133,7 @@ void run() {
 	if (initialized == false) {
 		init();
 		initialized = true;
+		gameEngine.window.setTitle("asd");
 	}
 	auto renderer = gameEngine.renderer;
 	gameEngine.globalMousePos = renderer.camera.cameraToGlobal(gameEngine.window.mousePos);
