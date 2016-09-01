@@ -78,6 +78,7 @@ void init() {
 	}
 	CC c=smallestEnclosingCircle(pps);
 	ccc ~= Circles.CircleData(vec3(1,0.1,0.3), c.pos, sqrt(c.r));
+
 	centralCircle = Circles.addCircles(ccc);
 	centralCircle.trf.pos = vec2(0, 0);
 
@@ -133,6 +134,7 @@ void run() {
 	if (initialized == false) {
 		init();
 		initialized = true;
+		gameEngine.window.setTitle("asd");
 	}
 	auto renderer = gameEngine.renderer;
 	gameEngine.globalMousePos = renderer.camera.cameraToGlobal(gameEngine.window.mousePos);
@@ -208,20 +210,20 @@ void run() {
 		Circles.remove(centralCircle);
 		ccc.length=0;
 		foreach (p; pps[0..num]) {
-			//ccc ~= Circles.CircleData(vec3(0.7,0.2,0.7), p, 0.0001);
+		//	ccc ~= Circles.CircleData(vec3(0.7,0.2,0.7), p, 0.0001);
 		}
-		//CC c=smallestEnclosingCircle(pps[0..num]);
-		//ccc ~= Circles.CircleData(vec3(1,0.1,0.3), c.pos, sqrt(c.r));
+		CC c=smallestEnclosingCircle(pps[0..num]);
+		ccc ~= Circles.CircleData(vec3(1,0.1,0.3), c.pos, sqrt(c.r));
 		//CC x1=somShapeA.getBoundingCircle();
-		CC x2=somShapeB.getBoundingCircle();
+		//CC x2=somShapeB.getBoundingCircle();
 		//ccc ~= Circles.CircleData(vec3(0.5,0.1,0.3), x1.pos, sqrt(x1.r));
-		ccc ~= Circles.CircleData(vec3(0,0.1,0.3), x2.pos, sqrt(x2.r));
+		//ccc ~= Circles.CircleData(vec3(0,0.1,0.3), x2.pos, sqrt(x2.r));
 		//ccc ~= Circles.CircleData(vec3(1,0.1,0.3), c.pos, sqrt(c.r));
 		centralCircle = Circles.addCircles(ccc);
 		centralCircle.trf.pos = vec2(0, 0);
 		num++;
 	}
-	if (gameEngine.window.keyPressed(';')){
+	/*if (gameEngine.window.keyPressed(';')){
 		pps.length=0;
 		foreach(o;0..15){
 			pps~=vec2(uniform(0,50),uniform(0,50))*0.0001;
@@ -237,6 +239,14 @@ void run() {
 
 		xxx();
 	}
+	if(tmpTrace !is null && tmpTrace.polyLine.points.length>2){
+		pps.length=0;//tmpTrace.polyLine.points.length;
+		foreach(p;tmpTrace.polyLine.points){
+			pps~=vec2(p);
+		}
+		num=cast(uint)(tmpTrace.polyLine.points.length-1);
+		xxx();
+	}*/
 	// -- Grab support
 	{
 		static vec2 grabPoint;
@@ -272,16 +282,16 @@ void run() {
 		dText.set(sss);
 	}
 	displayConnections(project);
-//	Footprint.rend.addToDraw(renderer.renderList);
+	Footprint.rend.addToDraw(renderer.renderList);
 	drawTmpTrace(tmpTrace,traceRend);
-	//project.grid.addToDraw(renderer.renderList);
+	project.grid.addToDraw(renderer.renderList);
 	foreach (tr; project.traces)
 		tr.addToDraw(renderer.renderList);
 	renderer.renderList.add(centralCircle, Priority(250));
 	renderer.renderList.add(cursor, Priority(250));
 	//renderer.renderList.add(somDraw, Priority(255));
-	//renderer.renderList.add(recDrawA, Priority(240));
-	//renderer.renderList.add(recDrawB, Priority(240));
+	renderer.renderList.add(recDrawA, Priority(240));
+	renderer.renderList.add(recDrawB, Priority(240));
 	//renderer.renderList.add(testText, Priority(251));
 	renderer.guiRenderList.add(dText, Priority(251));
 	foreach (sm; somethingAutoRender)

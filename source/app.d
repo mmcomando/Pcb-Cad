@@ -10,7 +10,20 @@ import utils;
 
 static import run;
 
-int main(string[] args) {
+version (window_dlangui) {
+	import dlangui;
+	mixin APP_ENTRY_POINT;
+	
+	/// entry point for dlangui based application
+	extern (C) int UIAppMain(string[] args) {
+		return maintImpl();
+	}
+}else{
+	int main(){
+		return maintImpl();
+	}
+}
+int maintImpl(){
 
     //import etc.linux.memoryerror;
 
