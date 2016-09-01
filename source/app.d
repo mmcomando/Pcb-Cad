@@ -12,9 +12,9 @@ static import run;
 
 int main(string[] args) {
 
-    import etc.linux.memoryerror;
+    //import etc.linux.memoryerror;
 
-    registerMemoryErrorHandler();
+    //registerMemoryErrorHandler();
 
     try {
         StopWatch sw;

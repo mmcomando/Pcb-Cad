@@ -221,7 +221,7 @@ final class Text : Drawable {
 		return meta;
 	}
 
-	void removeText(Text meta) {
+	static void removeText(Text meta) {
 		allocator.deallocate(meta.data);
 	}
 

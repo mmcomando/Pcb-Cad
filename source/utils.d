@@ -90,7 +90,6 @@ struct Transform{
 	mat4 toMatrix(){
 		alias c = cos;
 		alias s = sin;
-
 		
 		return mat4(scale * c(rot), -scale * s(rot), 0, pos.x,
 			scale * s(rot),  scale * c(rot), 0, pos.y,

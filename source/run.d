@@ -22,6 +22,8 @@ import drawables;
 import sect_dist;
 import shapes:AnyShape,test,Rectangle,collide,CircleAny=Circle,PolyLine,smallestEnclosingCircle,CC;
 
+import debuger;
+
 bool initialized = false;
 PcbProject project;
 Renderer renderer;
@@ -100,7 +102,6 @@ void init() {
 	recDrawA.color=vec3(0,0,1);
 	writeln(recDrawA);
 
-
 	project.name = "test";
 	try {
 		project.footprintsLibraries ~= new FootprintsLibrary("libcms.mod");
@@ -112,7 +113,7 @@ void init() {
 	}
 	int perRow = 16;
 	int i = 0;
-	foreach (ii; 0 .. 0)
+	foreach (ii; 0 .. 1)
 	foreach (lib; project.footprintsLibraries) {
 		foreach (libF; lib.footprints[0..$]) {
 			Footprint f = new Footprint(libF);
@@ -270,7 +271,6 @@ void run() {
 			gameEngine.fps,gameEngine.minTime * 1000, gameEngine.maxTime * 1000,gameEngine.globalMousePos.x,gameEngine.globalMousePos.y,isColliding);
 		dText.set(sss);
 	}
-
 	displayConnections(project);
 //	Footprint.rend.addToDraw(renderer.renderList);
 	drawTmpTrace(tmpTrace,traceRend);
@@ -287,6 +287,75 @@ void run() {
 	foreach (sm; somethingAutoRender)
 		renderer.renderList.add(sm, Priority(200));
 	renderer.draw();
+	drawDebug();
+	debugResetAll();
 }
 
 
+void drawDebug(){
+
+
+	static Text[] texts;
+	//DynamicText dText;
+	static Something[] soms;
+	foreach(s;soms){
+		Something.remove(s);
+	}
+	soms.length=0;
+	foreach(t;texts){
+		Text.removeText(t);
+	}
+	texts.length=0;
+
+
+
+	/*if (tmpTrace !is null) {
+		if (traceRend !is null)
+		traceRend = Something.fromPoints(tmpTrace.polyLine.getTriangles);
+		traceRend.trf.pos = vec2(0, 0);
+		traceRend.color = vec3(1, 0, 0);
+		traceRend.mode = GL_TRIANGLES;
+		gameEngine.renderer.renderList.add(traceRend, Priority(10));
+	}*/
+
+	/*recDrawA=somShapeA.toDrawable();
+	recDrawB=somShapeB.toDrawable();
+	recDrawB.color=vec3(1,0,1);
+	recDrawA.color=vec3(0,0,1);*/
+	int hh=-20;
+	void addText(string str){
+		Text tt=Text.fromString(str);
+		tt.trf=Transform(vec2(400,hh),0,10);
+		tt.color=vec3(1,0,1);
+		renderer.guiRenderList.add(tt, Priority(251));
+		texts~=tt;
+		hh-=20;
+	}
+	/*synchronized(debugSynchronization){
+		foreach(DebugRoot[]* rootsLocal;globalRoots){
+			foreach(ref DebugRoot root;*rootsLocal){
+				bool draw=false;
+				foreach(Container* con;root.getter.get()){
+					foreach(iii,ref ReusingArray arr;con.arr){
+						draw=draw || arr.get!(float).length>0;
+					}
+				}
+				if(draw){
+					addText(root.rootName);
+					foreach(Container* con;root.getter.get()){
+						addText(con.name);
+						foreach(iii,ref ReusingArray arr;con.arr){
+							if(arr.get!(float).length>0){
+								addText(arr.get!(float).length.to!string);
+								//addText(arr.get!(float).to!string);
+
+							}
+							//write(iii," ");
+							//writeln(arr.get!int());
+						}
+					}
+				}
+			}
+		}
+	}*/
+}

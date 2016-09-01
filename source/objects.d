@@ -164,6 +164,10 @@ void displayConnections(PcbProject proj) {
                 foreach (p1; points1) {
                     foreach (p2; points2) {
                         float length = (p1 - p2).length_squared;
+						import debuger;
+						static auto dd=Debug("debug in lines");
+						dd.init();
+						dd.ddd!"varA"(length);
                         if (length < minLength) {
                             minLength = length;
                             line = [p1, p2];
