@@ -24,53 +24,53 @@ version (window_dlangui) {
 	}
 }
 int maintImpl(){
+	version(DigitalMars){
+		import etc.linux.memoryerror;
+		registerMemoryErrorHandler();
+	}
 
-    //import etc.linux.memoryerror;
+	try {
+		StopWatch sw;
+		sw.start();
+		auto startTime = sw.peek();
 
-    //registerMemoryErrorHandler();
+		gameEngine = new Engine();
+		gameEngine.initAll();
+		auto engineInitTime = sw.peek();
 
-    try {
-        StopWatch sw;
-        sw.start();
-        auto startTime = sw.peek();
+		gameEngine.onUpdate = &run.run;
+		auto endTime = sw.peek();
+		writeln("Engine initialization in: ", engineInitTime.msecs - startTime.msecs, "ms");
+		writeln("Aplication initialization in: ", endTime.msecs - engineInitTime.msecs, "ms");
 
-        gameEngine = new Engine();
-        gameEngine.initAll();
-        auto engineInitTime = sw.peek();
+		gameEngine.mainLoop();
+		gameEngine.remove();
+		endTime = sw.peek();
 
-        gameEngine.onUpdate = &run.run;
-        auto endTime = sw.peek();
-        writeln("Engine initialization in: ", engineInitTime.msecs - startTime.msecs, "ms");
-        writeln("Aplication initialization in: ", endTime.msecs - engineInitTime.msecs, "ms");
+		long ttTime = endTime.msecs;
 
-        gameEngine.mainLoop();
-        gameEngine.remove();
-        endTime = sw.peek();
+		writefln("Total time:  %10dms  %10.3f of total time", ttTime, cast(float) ttTime * 100 / ttTime);
 
-        long ttTime = endTime.msecs;
+	}
+	catch (SharedLibLoadException e) {
+		writeln("Failed to load shared library. Whole exception message:");
+		writeln("---------------------");
+		writeln(e.msg);
+		writeln("---------------------");
+		writeln("You should propably install required library.");
+	}
+	catch (SymbolLoadException e) {
+		writeln("Failed to load symbol: ", e.symbolName(), " Whole exception message:",);
+		writeln("---------------------");
+		writeln(e.msg);
+		writeln("---------------------");
+		writeln("You propably have wrong version of library installed.");
+	}
+	catch (Exception e) {
+		printException(e);
+	} /*catch(Throwable e){
+	   printException(e);
+	   }*/
 
-        writefln("Total time:  %10dms  %10.3f of total time", ttTime, cast(float) ttTime * 100 / ttTime);
-
-    }
-    catch (SharedLibLoadException e) {
-        writeln("Failed to load shared library. Whole exception message:");
-        writeln("---------------------");
-        writeln(e.msg);
-        writeln("---------------------");
-        writeln("You should propably install required library.");
-    }
-    catch (SymbolLoadException e) {
-        writeln("Failed to load symbol: ", e.symbolName(), " Whole exception message:",);
-        writeln("---------------------");
-        writeln(e.msg);
-        writeln("---------------------");
-        writeln("You propably have wrong version of library installed.");
-    }
-    catch (Exception e) {
-        printException(e);
-    } /*catch(Throwable e){
-	    printException(e);
-    }*/
-
-    return 0;
+	return 0;
 }
