@@ -108,7 +108,8 @@ final class WindowDlanGUI : WindowEngine {
 	}
 
 	void setUpdateDelegate(void delegate() del) {
-		openglWidget.onUpdate = del;
+		onUpdate = del;
+		openglWidget.onUpdate = &update;
 	}
 	void setTitle(string) {
 		import run;
@@ -127,6 +128,7 @@ final class WindowDlanGUI : WindowEngine {
 		openglWidget=new MyOpenglWidget();
 		openglWidget.layoutWidth(FILL_PARENT);
 		openglWidget.layoutHeight(FILL_PARENT);
+		openglWidget.mouseEvent=&buttonHandler;
 
 		layout=new HorizontalLayout();
 		layout.layoutWidth=FILL_PARENT;
@@ -161,6 +163,7 @@ private:
 	bool[MouseButton.max + 1] mouseReleasedKeys;
 
 	void delegate(int, int) onResize;
+	void delegate() onUpdate;
 	vec2i windowSize = vec2i(300, 700);
 	vec2i _mousePos = vec2i(100, 100);
 	vec2i _mouseWheel;
@@ -186,57 +189,50 @@ private:
 
 	}
 
-	bool button_press_event() {
+	bool buttonHandler(Widget source,MouseEvent event) {
+		writeln(event.pos);
+		writeln(event.button);
 		MouseButton b;
-		int a;
-		switch (a) {
-			case 1:
-				b = MouseButton.left;
-				break;
-			case 2:
-				b = MouseButton.middle;
-				break;
-			case 3:
-				b = MouseButton.right;
-				break;
-			default:
-				return true;
+		if(event.action==MouseAction.ButtonDown){
+			switch (event.button) {
+				case dlangui.MouseButton.Left:
+					b = MouseButton.left;
+					break;
+				case dlangui.MouseButton.Middle:
+					b = MouseButton.middle;
+					break;
+				case dlangui.MouseButton.Right:
+					b = MouseButton.right;
+					break;
+				default:
+					return true;
+			}
+			mouseDownKeys[b] = true;
+			mousePressedKeys[b] = true;
+		}else if(event.action==MouseAction.ButtonUp){
+			switch (event.button) {
+				case dlangui.MouseButton.Left:
+					b = MouseButton.left;
+					break;
+				case dlangui.MouseButton.Middle:
+					b = MouseButton.middle;
+					break;
+				case dlangui.MouseButton.Right:
+					b = MouseButton.right;
+					break;
+				default:
+					return true;
+			}
+			mouseDownKeys[b] = false;
+			mouseReleasedKeys[b] = true;
 		}
-		mouseDownKeys[b] = true;
-		mousePressedKeys[b] = true;
+		_mouseWheel.y=event.wheelDelta;
+		_mousePos = vec2i(event.pos.x, event.pos.y);
+
 		return true;
 	}
-
-	bool button_release_event() {
-		MouseButton b;
-		int a;
-		switch (a) {
-			case 1:
-				b = MouseButton.left;
-				break;
-			case 2:
-				b = MouseButton.middle;
-				break;
-			case 3:
-				b = MouseButton.right;
-				break;
-			default:
-				return true;
-		}
-		mouseDownKeys[b] = false;
-		mouseReleasedKeys[b] = true;
-		return true;
-	}
-
-	bool motion_notify_event() {
-		int x, y;
-		//  x = cast(int) event.x;
-		//  y = cast(int) event.y;
-		_mousePos = vec2i(x, y);
-		return true;
-	}
-
 	void update() {
+		onUpdate();
 		_mouseWheel = vec2i(0, 0);
 		memset(&pressedKeys, 0, 256);
 		memset(&releasedKeys, 0, 256);
