@@ -16,6 +16,7 @@
 	"excludedSourceFiles":[
 		"source/engine/window_gtk.d",
 		"source/engine/window_dlangui.d",
+		"source/engine/universal_widget_dlangui.d",
 		"source/engine/window_sdl.d"
 	],
 	"configurations": [
@@ -46,10 +47,11 @@
 			"targetType": "executable",
 			"versions": ["window_dlangui"],
 			"dependencies" : {
-        		"dlangui": "~master"
+        		"dlangui": ">=0.0.0"
 			},
 			"sourceFiles":[
 				"source/engine/window_dlangui.d",
+				"source/engine/universal_widget_dlangui.d",
 			]
 		}
 	]

@@ -4,6 +4,7 @@ import std.conv:to;
 import std.format:format;
 import std.array:uninitializedArray;
 import std.math:sqrt;
+import std.algorithm:min,max;
 
 import gl3n.linalg;
 

@@ -1,8 +1,8 @@
 module objects;
 import std.math : abs;
-import std.stdio : writeln;
+import std.stdio : writeln,writefln;
 import std.algorithm : remove, min, max, find, map, joiner, each;
-import std.range : chain, empty, take;
+import std.range : chain, empty, take, lockstep;
 
 import derelict.opengl3.gl3 : GL_TRIANGLES, GL_LINES;
 import gl3n.linalg;

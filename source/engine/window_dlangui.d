@@ -1,6 +1,6 @@
 module engine.window_dlangui;
 
-import std.c.string : memset;
+import core.stdc.string : memset;
 import std.exception;
 import std.stdio;
 
@@ -113,30 +113,32 @@ final class WindowDlanGUI : WindowEngine {
 	}
 	void setTitle(string) {
 		import run;
-		//auto customWidget=universalMakeWidgetView!(customGetEditWidgetForType)(project.footprints[0]);
-		auto customWidget=universalMakeWidget!(customGetEditWidgetForType)(example);
+		auto customWidget=universalMakeWidgetView!(customGetEditWidgetForType)(project.footprints[0]);
+		//auto customWidget=universalMakeWidget!(customGetEditWidgetForType)(example);
+		//layout.addChild(new ResizerWidget());
+		//layout.addChild(customWidget);
 		layout.addChild(customWidget).layoutWidth(400);
 		
 	}
 
 	HorizontalLayout layout;
+	Window window;
 	this() {
 
 		Platform.instance.GLVersionMinor=3;
-		Window window = Platform.instance.createWindow("DlangUI OpenGL Example", null, WindowFlag.Resizable, 800, 700);
+		window = Platform.instance.createWindow("DlangUI OpenGL Example", null, WindowFlag.Resizable, 800, 700);
 
 		openglWidget=new MyOpenglWidget();
 		openglWidget.layoutWidth(FILL_PARENT);
 		openglWidget.layoutHeight(FILL_PARENT);
-		openglWidget.mouseEvent=&buttonHandler;
+		openglWidget.mouseEvent=&mouseHandler;
 
 		layout=new HorizontalLayout();
+		layout.keyEvent=&keyHandler;
 		layout.layoutWidth=FILL_PARENT;
 		layout.layoutHeight=FILL_PARENT;
 		layout.addChild(openglWidget);
-
-		window.mainWidget = layout;		
-		
+		window.mainWidget = layout;				
 		window.show();
 
 	}
@@ -168,30 +170,66 @@ private:
 	vec2i _mousePos = vec2i(100, 100);
 	vec2i _mouseWheel;
 
-	
+	static void dlanguiOnResize( int width, 
+		int height ){
+
+	}
 
 	
+	bool  keyHandler(Widget source,KeyEvent event) {
+		if(event.action==KeyAction.KeyDown){
+			switch (event.keyCode) {
+				case KeyCode.LSHIFT:
+					downKeysSpecial[Key.shift] = true;
+					pressedKeysSpecial[Key.shift] = true;
+					break;
+				case KeyCode.ALT:
+					downKeysSpecial[Key.alt] = true;
+					pressedKeysSpecial[Key.alt] = true;
+					break;
+				case KeyCode.CONTROL:
+					downKeysSpecial[Key.ctrl] = true;
+					pressedKeysSpecial[Key.ctrl] = true;
+					break;
+				default:break;
+			}
+		}else if(event.action==KeyAction.KeyUp){
+			switch (event.keyCode) {
+				case KeyCode.LSHIFT:
+					downKeysSpecial[Key.shift] = false;
+					releasedKeysSpecial[Key.shift] = true;
+					break;
+				case KeyCode.ALT:
+					downKeysSpecial[Key.alt] = false;
+					releasedKeysSpecial[Key.alt] = true;
+					break;
+				case KeyCode.CONTROL:
+					downKeysSpecial[Key.ctrl] = false;
+					releasedKeysSpecial[Key.ctrl] = true;
+					break;
+				default:break;
+			}
+		}	
+		if(event.keyCode>=KeyCode.KEY_A && event.keyCode<=KeyCode.KEY_Z){
+			ubyte add=32;
+			if(keyDown(Key.shift)){
+				add=0;
+			}
+			if(event.action==KeyAction.KeyDown){
+				downKeys[event.keyCode+add] = true;
+				pressedKeys[event.keyCode+add] = true;
+			}else if(event.action==KeyAction.KeyUp){
+				downKeys[event.keyCode+add] = false;
+				releasedKeys[event.keyCode+add] = true;					
+			}
 
-	
-	bool keyPressedImpl() {
-		char ch = 1;
-		downKeys[ch] = true;
-		pressedKeys[ch] = true;
+			
+		}
 		return true;
 
 	}
 
-	bool keyReleasedImpl() {
-		ubyte ch = 1;
-		downKeys[ch] = false;
-		releasedKeys[ch] = true;
-		return true;
-
-	}
-
-	bool buttonHandler(Widget source,MouseEvent event) {
-		writeln(event.pos);
-		writeln(event.button);
+	bool mouseHandler(Widget source,MouseEvent event) {
 		MouseButton b;
 		if(event.action==MouseAction.ButtonDown){
 			switch (event.button) {
@@ -240,6 +278,10 @@ private:
 		memset(&mouseReleasedKeys, 0, MouseButton.max + 1);
 		memset(&pressedKeysSpecial, 0, Key.max + 1);
 		memset(&releasedKeysSpecial, 0, Key.max + 1);
+		vec2i wSize=size;
+		if(size.x!=openglWidget.width || size.y!=openglWidget.height){
+			resize(openglWidget.width,openglWidget.height);
+		}
 	}
 
 	
@@ -261,15 +303,10 @@ class MyOpenglWidget : VerticalLayout {
 		super("OpenGLView");
 		layoutWidth = FILL_PARENT;
 		layoutHeight = FILL_PARENT;
-		
-		VerticalLayout layout=new VerticalLayout();
-		layout.layoutWidth=FILL_PARENT;
-		layout.layoutHeight=FILL_PARENT;
-		layout.margins=0;
-		layout.padding=0;
-		layout.backgroundDrawable = DrawableRef(new OpenGLDrawable(&doDraw));
-		layout.addChild(new TextWidget(null,""d));
-		addChild(layout);
+		margins=0;
+		padding=0;
+		backgroundDrawable = DrawableRef(new OpenGLDrawable(&doDraw));
+		addChild(new TextWidget(null,""d));
 	}
 	void delegate() onUpdate;
 	/// returns true is widget is being animated - need to call animate() and redraw

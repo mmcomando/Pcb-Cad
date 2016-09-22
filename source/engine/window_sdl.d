@@ -111,7 +111,7 @@ final class WindowSDL : Window {
     }
 
     void setTitle(string) {
-        assert(0);
+        //assert(0);
     }
 
     void start() {
