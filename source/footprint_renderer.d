@@ -99,20 +99,6 @@ class FootprintRenderer  {
 				trianglePoints~=[tr.p1+shape.trf.pos,tr.p2+shape.trf.pos,tr.p3+shape.trf.pos];
 			}
         }
-		foreach (shape; f.shapesCircle) {
-			Circle s=shape.circle;
-			Triangle[] tris=s.getTriangles();
-			foreach(tr;tris){
-				trianglePoints~=[tr.p1+shape.trf.pos,tr.p2+shape.trf.pos,tr.p3+shape.trf.pos];
-			}
-		}
-		foreach (shape; f.shapesRectangle) {
-			Rectangle s=shape.rectangle;
-			Triangle[] tris=s.getTriangles();
-			foreach(tr;tris){
-				trianglePoints~=[tr.p1+shape.trf.pos,tr.p2+shape.trf.pos,tr.p3+shape.trf.pos];
-			}
-		}
 		triangles = SomethingNoTransform.fromPoints(trianglePoints);
         d.r = Circles.addCircles(metas);
         d.r.trf =footprint.trf;
@@ -120,10 +106,13 @@ class FootprintRenderer  {
         triangles.mode = GL_TRIANGLES;
 
 		//TODO pad's names only for rectangles
-		foreach (name, sh; lockstep(f.shapeRectangleConnection, f.shapesRectangle)) {
+		foreach (name, sh; lockstep(f.shapeConnection, f.shapes)) {
             if (name == "?" || name == "")
                 continue;
-
+			if(sh.shape.currentType!=sh.shape.Types.Rectangle)
+				continue;
+			AnyShape shape=sh.shape;
+			Rectangle* rec=shape.get!Rectangle;
 			Transform trf;
             auto data = Text.fromString(name);
             data.trf=footprint.trf;
@@ -131,7 +120,7 @@ class FootprintRenderer  {
 			trf.rot=data.trf.rot = 0;
 			trf.pos=sh.trf.pos;
 			//text rotation 
-			vec2 wh=sh.rectangle.wh;
+			vec2 wh=rec.wh;
 			data.trf.scale =wh.y;
 			if(wh.x < wh.y){
 				trf.rot+= 3.14 / 2;

@@ -224,7 +224,19 @@ final class Text : Drawable {
 	static void removeText(Text meta) {
 		allocator.deallocate(meta.data);
 	}
-
+	//not tested
+	static vec2 getTextSize(string txt) {
+		if(txt.length==0)return vec2(0,0);
+		vec2 stingSize = vec2(0, charHalfSize.y*2);
+		foreach (ubyte c; txt) {
+			if (c == '\n') {
+				stingSize.x+=charHalfSize.y * 2;
+				continue;
+			}
+			stingSize.x+=charHalfSize.y*2;
+		}
+		return stingSize;
+	}
 private:
 	alias Allocator = GpuChunkAllocator!GL_ARRAY_BUFFER;
 	static Allocator allocator;
@@ -326,19 +338,7 @@ private:
 		}
 		return posCord;
 	}
-	//not tested
-	static vec2 getTextSize(string txt) {
-		if(txt.length==0)return vec2(0,0);
-		vec2 stingSize = vec2(0, charHalfSize.y*2);
-		foreach (ubyte c; txt) {
-			if (c == '\n') {
-				stingSize.x+=charHalfSize.y * 2;
-				continue;
-			}
-			stingSize.x+=charHalfSize.y*2;
-		}
-		return stingSize;
-	}
+
 
 }
 

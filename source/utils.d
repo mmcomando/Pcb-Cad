@@ -62,7 +62,9 @@ void printException(Exception e, int maxStack = 4) {
 	}
 	writeln("--------------");
 }
-
+float vectorToAngle(vec2 p) {
+	return atan2(p.y,p.x);
+}
 vec2 rotateVector(vec2 p, float r) {
 	float c = cos(r);
 	float s = sin(r);
@@ -151,41 +153,6 @@ unittest {
 
 import objects;
 import std.array;
-
-bool traceCollide(Trace aaa, Trace bbb, ref vec2[2] closestPoints) {
-	vec2[2][] linesATrace;
-	vec2[2][] linesBTrace;
-
-	linesATrace = uninitializedArray!(vec2[2][])(aaa.polyLine.points.length - 1);
-	linesBTrace = uninitializedArray!(vec2[2][])(bbb.polyLine.points.length - 1);
-	auto a=aaa.polyLine;
-	auto b=bbb.polyLine;
-	for (int i = 1; i < a.points.length; i++) {
-		linesATrace[i - 1] = [a.points[i - 1], a.points[i]];
-	}
-	for (int i = 1; i < b.points.length; i++) {
-		linesBTrace[i - 1] = [b.points[i - 1], b.points[i]];
-	}
-
-	float minLength = float.max;
-	float qLengthCollide = (a.traceWidth + b.traceWidth) * (a.traceWidth + b.traceWidth);
-	foreach (lineA; linesATrace) {
-		foreach (lineB; linesBTrace) {
-			//float qLength=linesColide(lineA,lineB);
-			//float qLength = sect_dist_nxt(sect(lineA[0], lineA[1]), sect(lineB[0], lineB[1]), 100)[0];
-			float[2] qLength = sect_dist_nxt(sect(lineA[0], lineA[1]), sect(lineB[0], lineB[1]), 100);
-			if (qLength[1] ==0) {
-				return true;
-			} else if (qLength[1] < minLength) {
-				minLength = qLength[1];
-				closestPoints = [lineA[0], lineB[0]];
-			}
-		}
-	}
-	return false;
-
-}
-
 
 //for build in arrays
 void removeInPlace(R, N)(ref R haystack, N index)
