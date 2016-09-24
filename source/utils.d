@@ -1,6 +1,6 @@
 module utils;
 /**
- * Some random functions immiedately required
+ * Some random functions
  */
 
 import std.stdio : writeln, writefln;
@@ -151,8 +151,6 @@ unittest {
 	}
 }
 
-import objects;
-import std.array;
 
 //for build in arrays
 void removeInPlace(R, N)(ref R haystack, N index)

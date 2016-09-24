@@ -113,7 +113,7 @@ final class WindowDlanGUI : WindowEngine {
 	}
 	void setTitle(string) {
 		import run;
-		auto customWidget=universalMakeWidgetView!(customGetEditWidgetForType)(project.footprints[0]);
+		auto customWidget=universalMakeWidget!(customGetEditWidgetForType)(project.grid);
 		//auto customWidget=universalMakeWidget!(customGetEditWidgetForType)(example);
 		//layout.addChild(new ResizerWidget());
 		//layout.addChild(customWidget);
@@ -183,11 +183,11 @@ private:
 					downKeysSpecial[Key.shift] = true;
 					pressedKeysSpecial[Key.shift] = true;
 					break;
-				case KeyCode.ALT:
+				case KeyCode.LALT:
 					downKeysSpecial[Key.alt] = true;
 					pressedKeysSpecial[Key.alt] = true;
 					break;
-				case KeyCode.CONTROL:
+				case KeyCode.LCONTROL:
 					downKeysSpecial[Key.ctrl] = true;
 					pressedKeysSpecial[Key.ctrl] = true;
 					break;
@@ -199,11 +199,11 @@ private:
 					downKeysSpecial[Key.shift] = false;
 					releasedKeysSpecial[Key.shift] = true;
 					break;
-				case KeyCode.ALT:
+				case KeyCode.LALT:
 					downKeysSpecial[Key.alt] = false;
 					releasedKeysSpecial[Key.alt] = true;
 					break;
-				case KeyCode.CONTROL:
+				case KeyCode.LCONTROL:
 					downKeysSpecial[Key.ctrl] = false;
 					releasedKeysSpecial[Key.ctrl] = true;
 					break;

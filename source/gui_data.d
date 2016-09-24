@@ -1,6 +1,6 @@
 module gui_data;
 
-import objects;
+import pcb_project;
 
 __gshared GuiData guiData;
 shared static this() {

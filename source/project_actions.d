@@ -10,7 +10,7 @@ import gl3n.linalg;
 import derelict.opengl3.gl3;
 
 import engine;
-import objects;
+import pcb_project;
 import action;
 import utils;
 import engine.renderer;
@@ -20,15 +20,92 @@ import drawables;
 import shapes;
 
 Trace tmpTrace;
-
 Trace[] traces;
-
 bool snapEnabled = true;
 Footprint grabbed;
 Something traceRend;
 float traceWidth = 0.001;
-
 vec2 grabbedDT;
+
+
+
+class TransformFootprint : Action {
+    Transform before;
+    Transform after;
+    Footprint footprint;
+    this(Footprint ft, Transform before, Transform after) {
+        footprint = ft;
+        this.before = before;
+        this.after = after;
+    }
+    
+    void doAction() {
+        footprint.trf = after;
+    }
+    
+    void undoAction() {
+        footprint.trf = before;
+    }
+    
+}
+class RemoveFootprint : Action {
+    PcbProject project;
+    Footprint footprint;
+    this(PcbProject project, Footprint ft) {
+        this.project = project;
+        footprint = ft;
+    }
+    
+    void doAction() {
+        writeln("removefotptirnd");
+        project.removeFootprint(footprint);
+    }
+    
+    void undoAction() {
+        writeln("addd fotptirnd");
+        project.addFootprint(footprint);
+    }
+    
+}
+class RemoveTrace : Action {
+    PcbProject project;
+    Trace trace;
+    this(PcbProject project, Trace tr) {
+        this.project = project;
+        trace = tr;
+    }
+    
+    void doAction() {
+        project.removeTrace(trace);
+    }
+    
+    void undoAction() {
+        project.addTrace(trace);
+    }    
+}
+class AddTrace : Action {
+    PcbProject project;
+    Trace trace;
+    this(PcbProject project, Trace tr) {
+        this.project = project;
+        trace = tr;
+    }
+    
+    void doAction() {
+        project.addTrace(trace);
+    }
+    
+    void undoAction() {
+        project.removeTrace(trace);
+    }    
+}
+
+
+
+
+
+
+
 void update(PcbProject proj, vec2 globalMousePos) {
 	if (tmpTrace !is null) {
 		tmpTrace.polyLine.traceWidth=traceWidth;
@@ -90,6 +167,7 @@ void addFootprint(PcbProject proj, vec2 globalMousePos) {
             auto ff = footprints.find!("a.name==b")(guiData.selectedFootprint);
             if (ff.length > 0) {
                 Footprint f = new Footprint(ff[0]);
+                f.addToDraw();
                 //footprints ~= f;
 				Transform tmp=f.trf;
 				tmp.pos=globalMousePos;
@@ -316,19 +394,5 @@ void snapMouse(PcbProject proj, vec2 globalMousePos) {
     if (snaped) {
         vec2i newMousePos = gameEngine.renderer.camera.globalToCamera(nearestSnapPoint);
         gameEngine.window.mousePos = vec2i(newMousePos);
-    }
-}
-
-void drawTmpTrace(Trace tmpTrace,Something traceRend) {
-    if (tmpTrace !is null) {
-		tmpTrace.refreshDraw();
-		tmpTrace.addToDraw(gameEngine.renderer.renderList);
-        /*if (traceRend !is null)
-            Something.remove(traceRend);
-        traceRend = Something.fromPoints(tmpTrace.polyLine.getTriangles);
-		traceRend.trf.pos = vec2(0, 0);
-        traceRend.color = vec3(1, 0, 0);
-        traceRend.mode = GL_TRIANGLES;
-        gameEngine.renderer.renderList.add(traceRend, Priority(10));*/
     }
 }

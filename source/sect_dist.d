@@ -159,17 +159,3 @@ unittest {
 	//	assert(qLength>0.0001);
 	}
 }
-//benchmark
-int test() {
-    float result = 7;
-    float am = 8;
-    for (ulong i = 0; i < 1000 * 1000 * 10; i++) {
-        if (i == 10000)
-            am *= 32; //don't  optimize away
-        sect s1 = sect(pos_t(0, 0), pos_t(0, uniform(0f, 600f)));
-        sect s2 = sect(pos_t(0.5, -0.25), pos_t(3, 2));
-        auto a = sect_dist_nxt(s1, s2, 100);
-        result += a[0];
-    }
-    return cast(int) result;
-}

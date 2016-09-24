@@ -61,6 +61,7 @@ final class Something : Drawable {
 	}
 
 	static void init() {
+        SomethingProgram.init();
 		glGenVertexArrays(1, &vao);
 		glBindVertexArray(vao);
 		glBindBuffer(GL_ARRAY_BUFFER, gameEngine.renderer.verticesAllocator.vbo);
@@ -182,6 +183,7 @@ final class Text : Drawable {
 	}
 
 	static void init() {
+        TextProgram.init();
 		DerelictSDL2ttf.load();
 		DerelictSDL2Image.load();
 		TTF_Init();
@@ -471,6 +473,7 @@ final class Circles : Drawable {
 	}
 
 	static void init() {
+        CirclesInstancedProgram.init();
 		vec2[] points = getPointsOnCircle(vec2(0, 0), 1);
 
 		vec2[] trianglePoints;
@@ -512,6 +515,7 @@ final class Circles : Drawable {
 		glDisableVertexAttribArray(2);
 		glDisableVertexAttribArray(3);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
+
 
 	}
 

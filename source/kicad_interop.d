@@ -1,5 +1,5 @@
 module kicad_interop;
-import objects;
+import pcb_project;
 import std.algorithm : min, max, strip;
 import gl3n.linalg;
 import kicad_enums;
