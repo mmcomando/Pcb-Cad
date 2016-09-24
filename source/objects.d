@@ -123,11 +123,124 @@ struct ConnectionsManager {
     void remove(Trace trace) {
         uint[] consToRemove;
         Connection[] consToAdd;
-        foreach (conIter, ref conn; connections) {
+        foreach (uint conIter, ref conn; connections) {
             bool removed=conn.traces.removeElementInPlace(trace);
+            if(removed){
+                Connection[] cons=checkConnectionUnity(conn);
+                if(cons !is null){
+                    consToRemove~=conIter;
+                    consToAdd~=cons;
+                }
+            }
+        }
+        foreach_reverse(num;consToRemove){
+            connections.removeInPlace(num);
+        }
+        connections~=consToAdd;
 
+    }
+    Connection[] checkConnectionUnity(Connection connection){
+        struct Group{
+            uint[] traces;
+            uint[] shapes;
+        }
+        Group[] groups;
+        bool collideWithGroupTrace(Group con,uint traceNum){
+            Trace trace=connection.traces[traceNum];
+            foreach (num; con.traces) {
+                Trace tr=connection.traces[num];
+                if (collideUniversal(Transform(),Transform(),tr.polyLine, trace.polyLine)) {
+                    return  true;
+                }
+            }
+            foreach (num; con.shapes) {
+                PadID pad_id=connection.pads[num];
+                TrShape trShape=pad_id.footprint.f.shapes[pad_id.shapeNum];
+                if (collideUniversal(Transform(),pad_id.footprint.trf*trShape.trf,trace.polyLine,trShape.shape)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        bool collideWithGroupShape(Group con,uint shapeNum){
+            PadID pad_id_tmp=connection.pads[shapeNum];
+            TrShape shape=pad_id_tmp.footprint.f.shapes[pad_id_tmp.shapeNum];
+            Transform shapeTrf=pad_id_tmp.footprint.trf*shape.trf;
+            foreach (num; con.traces) {
+                Trace tr=connection.traces[num];
+                if (collideUniversal(Transform(),shapeTrf,tr.polyLine, shape.shape)) {
+                    return  true;
+                }
+            }
+            foreach (num; con.shapes) {
+                PadID pad_id=connection.pads[num];
+                TrShape trShape=pad_id.footprint.f.shapes[pad_id.shapeNum];
+                if (collideUniversal(shapeTrf,pad_id.footprint.trf*trShape.trf,shape.shape,trShape.shape)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        //traces 
+        foreach(uint traceNum,trace;connection.traces){
+            uint[] collideWithGroups;
+            foreach(uint i,group;groups){
+                if(collideWithGroupTrace(group,traceNum)){
+                    collideWithGroups~=i;
+                }
+            }
+            if(collideWithGroups.length==0){
+                Group newGroup;
+                newGroup.traces~=traceNum;
+                groups~=newGroup;
+            }else{
+                Group* firstGroup=&groups[collideWithGroups[0]];
+                firstGroup.traces~=traceNum;
+                foreach_reverse(groupNum;collideWithGroups[1..$]){
+                    Group group=groups[groupNum];
+                    firstGroup.traces~=group.traces;
+                    firstGroup.shapes~=group.shapes;
+                    groups.removeInPlace(groupNum);                    
+                }
+            }
+        }
+        //pads
+        foreach(uint padNum,trace;connection.pads){
+            uint[] collideWithGroups;
+            foreach(uint i,group;groups){
+                if(collideWithGroupShape(group,padNum)){
+                    collideWithGroups~=i;
+                }
+            }
+            if(collideWithGroups.length==0){
+                Group newGroup;
+                newGroup.shapes~=padNum;
+                groups~=newGroup;
+            }else{
+                Group* firstGroup=&groups[collideWithGroups[0]];
+                firstGroup.shapes~=padNum;
+                foreach_reverse(groupNum;collideWithGroups[1..$]){
+                    Group group=groups[groupNum];
+                    firstGroup.traces~=group.traces;
+                    firstGroup.shapes~=group.shapes;
+                    groups.removeInPlace(groupNum);                    
+                }
+            }
+        }
+        Connection[] cons_return;
+        foreach(group;groups){
+            Connection con;
+            con.name=connection.name;
+            foreach(num;group.traces){
+                con.traces~=connection.traces[num];
+            }
+            foreach(num;group.shapes){
+                con.pads~=connection.pads[num];
+            }
+            cons_return~=con;
         }
 
+        return cons_return;
     }
 
 }
@@ -621,7 +734,7 @@ class FootprintData {
             minn = vec2(0, 0);
         }
         maxx = minn + vec2(0.00001, 0.00001);
-       
+
         foreach (l; lines) {
             minn.x = min(l[0].x, l[1].x, minn.x);
             minn.y = min(l[0].y, l[1].y, minn.y);
