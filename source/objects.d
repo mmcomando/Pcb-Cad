@@ -21,7 +21,7 @@ import shapes;
 
 struct PadID {
     Footprint footprint;
-	uint shapeNum;//only rectangles
+    uint shapeNum;//only rectangles
 }
 
 struct ConnectionsManager {
@@ -33,7 +33,7 @@ struct ConnectionsManager {
 
             Connection con;
             con.name = conName;
-			con.pads ~= PadID(footprint, shapeNum);
+            con.pads ~= PadID(footprint, shapeNum);
             connections ~= con;
         }
     }
@@ -50,40 +50,63 @@ struct ConnectionsManager {
 
     void add(Trace trace) {
         if (!trace.connection.empty) {
-            vec2[2] closestPoints;
-            foreach (ref conn; connections) {
+            bool added=false;
+            Connection* conAddedIn;
+            uint[] consToRemove;
+            foreach (uint conIter,ref conn; connections) {
                 if (conn.name != trace.connection)
                     continue;
-                foreach (tr; conn.traces) {				
-					if (collideUniversal(Transform(),Transform(),tr.polyLine, trace.polyLine)) {
-                        conn.traces ~= trace;
-                        return;
-                    }
-                }
-
+                bool collide=false;
                 foreach (pad_id; conn.pads) {
-					TrShape trShape=pad_id.footprint.f.shapes[pad_id.shapeNum];
-					if (collideUniversal(Transform(),pad_id.footprint.trf*trShape.trf,trace.polyLine,trShape.shape)) {
-                        conn.traces ~= trace;
-                        return;
+                    TrShape trShape=pad_id.footprint.f.shapes[pad_id.shapeNum];
+                    if (collideUniversal(Transform(),pad_id.footprint.trf*trShape.trf,trace.polyLine,trShape.shape)) {
+                        collide=true;
+                        break;
                     }
                 }
+                if(!collide){
+                    foreach (tr; conn.traces) {				
+                        if (collideUniversal(Transform(),Transform(),tr.polyLine, trace.polyLine)) {
+                            collide=true;
+                            break;
+                        }
+                    }
+                }
+                if(collide){
+                    if(!added){
+                        conn.traces ~= trace;
+                        conAddedIn=&conn;
+                        added=true;
+                    }else{
+                        //merge connections
+                        conAddedIn.traces~=conn.traces;
+                        conAddedIn.pads~=conn.pads;
+                        consToRemove~=conIter;
+                    }
+                }				
+            }
+            foreach_reverse(el;consToRemove){
+                connections.removeInPlace(el);
+            }
+            if(added){
+                return;
             }
         } else {
-            vec2[2] closestPoints;
             foreach (ref conn; connections) {
                 foreach (tr; conn.traces) {
-					if (collideUniversal(Transform(),Transform(),tr.polyLine, trace.polyLine)) {
+                    if (collideUniversal(Transform(),Transform(),tr.polyLine, trace.polyLine)) {
                         conn.traces ~= trace;
-						trace.connection=conn.name;
-						trace.refreshDraw();
+                        trace.connection=conn.name;
+                        trace.refreshDraw();
                         return;
                     }
                 }
                 foreach (pad_id; conn.pads) {
-					TrShape trShape=pad_id.footprint.f.shapes[pad_id.shapeNum];
-					if (collideUniversal(Transform(),pad_id.footprint.trf*trShape.trf,trace.polyLine,trShape.shape)) {
+                    TrShape trShape=pad_id.footprint.f.shapes[pad_id.shapeNum];
+                    if (collideUniversal(Transform(),pad_id.footprint.trf*trShape.trf,trace.polyLine,trShape.shape)) {
                         conn.traces ~= trace;
+                        trace.connection=conn.name;
+                        trace.refreshDraw();
                         return;
                     }
                 }
@@ -92,20 +115,19 @@ struct ConnectionsManager {
         }
 
         Connection con;
+        con.name=trace.connection;
         con.traces ~= trace;
         connections ~= con;
     }
 
     void remove(Trace trace) {
-        foreach (kk, ref conns; connections) {
-            foreach_reverse (i, tr; conns.traces) {
-                if (tr == trace) {
+        uint[] consToRemove;
+        Connection[] consToAdd;
+        foreach (conIter, ref conn; connections) {
+            bool removed=conn.traces.removeElementInPlace(trace);
 
-                    conns.traces[i] = conns.traces[$ - 1];
-                    conns.traces = conns.traces[0 .. $ - 1];
-                }
-            }
         }
+
     }
 
 }
@@ -136,7 +158,7 @@ void displayConnections(PcbProject proj) {
     auto getPoints(Connection* conn) {
         static vec2 getPos(T)(T a) {
             Footprint f = a.footprint;
-			vec2 padPos = f.f.shapes[a.shapeNum].trf.pos;
+            vec2 padPos = f.f.shapes[a.shapeNum].trf.pos;
             return rotateVector(padPos, f.trf.rot) + a.footprint.trf.pos;
         }
         auto padPoints = conn.pads.map!getPos();
@@ -165,10 +187,10 @@ void displayConnections(PcbProject proj) {
                 foreach (p1; points1) {
                     foreach (p2; points2) {
                         float length = (p1 - p2).length_squared;
-						import debuger;
-						static auto dd=Debug("debug in lines");
-						dd.init();
-						dd.ddd!"varA"(length);
+                        import debuger;
+                        static auto dd=Debug("debug in lines");
+                        dd.init();
+                        dd.ddd!"varA"(length);
                         if (length < minLength) {
                             minLength = length;
                             line = [p1, p2];
@@ -195,8 +217,8 @@ void displayConnections(PcbProject proj) {
     }
     drawLines = Something.fromPoints(lines);
     drawLines.mode = GL_LINES;
-	drawLines.trf.pos = vec2(0, 0);
-	drawLines.trf.rot = 0;
+    drawLines.trf.pos = vec2(0, 0);
+    drawLines.trf.rot = 0;
     drawLines.color = vec3(1, 0, 1);
     somethingAutoRender = somethingAutoRender ~= drawLines;
 
@@ -206,8 +228,8 @@ void displayTraceConnections(PcbProject proj) {
     vec2[] lines;
     foreach (traceA; proj.traces) {
         foreach (traceB; proj.traces) {
-			if (!collideUniversal(Transform(),Transform(),traceA.polyLine, traceB.polyLine)) {
-				lines ~= [traceA.polyLine.points[0], traceB.polyLine.points[0]];
+            if (!collideUniversal(Transform(),Transform(),traceA.polyLine, traceB.polyLine)) {
+                lines ~= [traceA.polyLine.points[0], traceB.polyLine.points[0]];
             }
         }
     }
@@ -224,8 +246,8 @@ void displayTraceConnections(PcbProject proj) {
     }
     drawLines = Something.fromPoints(lines);
     drawLines.mode = GL_LINES;
-	drawLines.trf.pos = vec2(0, 0);
-	drawLines.trf.rot = 0;
+    drawLines.trf.pos = vec2(0, 0);
+    drawLines.trf.rot = 0;
     drawLines.color = vec3(0.3, 0.5, 0);
     somethingAutoRender = somethingAutoRender ~= drawLines;
 
@@ -267,7 +289,7 @@ class PcbProject {
     void addFootprint(Footprint f) {
         footprints ~= f;
         connectionsManager.add(f);
-		f.addToDraw();
+        f.addToDraw();
     }
 
     void removeFootprint(size_t i) {
@@ -314,42 +336,42 @@ class PcbProject {
         return null;
     }
 
-	string collideWithConnection(Transform trf, AnyShape shape, string ignore = "") {
-		writeln("traceCollideWithSomethingInProject");
-		writefln("traces: %d, footprints: %d",traces.length,footprints.length);
-		foreach (i,tr; traces) {
-			string name = tr.connection;
-			if (name == ignore) {
-				continue;
-			}
-			//if (collideUniversal(Transform(),Transform(),trace.polyLine, tr.polyLine)) {
-			if (collideUniversal(Transform(),trf,tr.polyLine, shape)) {
-				writeln("colide with trace: ", name, " num: ",i);
-				return name;
-			}
-		}
-		foreach (i,ff; footprints) {
-			foreach (j,name, trShape; lockstep(ff.f.shapeConnection, ff.f.shapes)) {
-				//foreach (pNum, pad; ff.f.shapesRectangle) {
-				//string name = ff.padConnections[pNum];
-				if (name == ignore)
-					continue;
-				//TrShape trShape=ff.f.shapes[pad.shapeID];
-				if (collideUniversal(trf,trShape.trf*ff.trf,shape,trShape.shape)) {
-					writefln("colide with %s  pad(%s): %s", i,j, name);
-					return name;
-				}
-			}
-		}
-		return "";
-	}
+    string collideWithConnection(Transform trf, AnyShape shape, string ignore = "") {
+        writeln("traceCollideWithSomethingInProject");
+        writefln("traces: %d, footprints: %d",traces.length,footprints.length);
+        foreach (i,tr; traces) {
+            string name = tr.connection;
+            if (name == ignore) {
+                continue;
+            }
+            //if (collideUniversal(Transform(),Transform(),trace.polyLine, tr.polyLine)) {
+            if (collideUniversal(Transform(),trf,tr.polyLine, shape)) {
+                writeln("colide with trace: ", name, " num: ",i);
+                return name;
+            }
+        }
+        foreach (i,ff; footprints) {
+            foreach (j,name, trShape; lockstep(ff.f.shapeConnection, ff.f.shapes)) {
+                //foreach (pNum, pad; ff.f.shapesRectangle) {
+                //string name = ff.padConnections[pNum];
+                if (name == ignore)
+                    continue;
+                //TrShape trShape=ff.f.shapes[pad.shapeID];
+                if (collideUniversal(trf,trShape.trf*ff.trf,shape,trShape.shape)) {
+                    writefln("colide with %s  pad(%s): %s", i,j, name);
+                    return name;
+                }
+            }
+        }
+        return "";
+    }
 }
 
 class TransformFootprint : Action {
     Transform before;
-	Transform after;
+    Transform after;
     Footprint footprint;
-	this(Footprint ft, Transform before, Transform after) {
+    this(Footprint ft, Transform before, Transform after) {
         footprint = ft;
         this.before = before;
         this.after = after;
@@ -384,61 +406,61 @@ class RemoveFootprint : Action {
 
 class Trace {
     string connection;
-	PolyLine polyLine;
+    PolyLine polyLine;
     Something rendPoints;
     Circles rendWheels;
-	Text[] texts;
+    Text[] texts;
     this(float traceWidth) {
         this.polyLine.traceWidth = traceWidth;
     }
 
     void init() {
-		Triangle[] trianglePoints = polyLine.getTriangles();
+        Triangle[] trianglePoints = polyLine.getTriangles();
         Circles.CircleData[] metas;
         foreach (p; polyLine.points) {
             metas ~= Circles.CircleData(vec3(1, 0, 0), p, polyLine.traceWidth / 2);
         }
-		vec2 last_point=polyLine.points[0];
-		foreach (p; polyLine.points[1..$]) {
-			Text txt=Text.fromString(connection);
-			vec2 pointsDt=p-last_point;
-			float scale=polyLine.traceWidth*0.5;
-			float rot=vectorToAngle(pointsDt);
-			if(abs(rot)>PI/2){
-				rot+=PI;
-			}
-			vec2 textSize=Text.getTextSize(connection)*scale/2;
-			if(textSize.length<pointsDt.length){
-				vec2 textDt=textSize/2;
-				textDt=rotateVector(vec2(textDt.x,0),rot);
-				txt.trf.pos=(last_point+p)/2-textDt;
-				txt.trf.rot=rot;
-				txt.trf.scale=scale;
-				texts~=txt;
-			}
-			last_point=p;
-		}
+        vec2 last_point=polyLine.points[0];
+        foreach (p; polyLine.points[1..$]) {
+            Text txt=Text.fromString(connection);
+            vec2 pointsDt=p-last_point;
+            float scale=polyLine.traceWidth*0.5;
+            float rot=vectorToAngle(pointsDt);
+            if(abs(rot)>PI/2){
+                rot+=PI;
+            }
+            vec2 textSize=Text.getTextSize(connection)*scale/2;
+            if(textSize.length<pointsDt.length){
+                vec2 textDt=textSize/2;
+                textDt=rotateVector(vec2(textDt.x,0),rot);
+                txt.trf.pos=(last_point+p)/2-textDt;
+                txt.trf.rot=rot;
+                txt.trf.scale=scale;
+                texts~=txt;
+            }
+            last_point=p;
+        }
         rendWheels = Circles.addCircles(metas, true);
         rendWheels.trf.pos = vec2(0, 0);
         rendPoints = Something.fromPoints(trianglePoints);
-		rendPoints.trf.pos = vec2(0, 0);
+        rendPoints.trf.pos = vec2(0, 0);
         rendPoints.color = vec3(1, 0, 0);
         rendPoints.mode = GL_TRIANGLES;
     }
-	void refreshDraw(){
-		if(rendPoints !is null){
-			Something.remove(rendPoints);
-			Circles.remove(rendWheels);
-			foreach(t;texts)Text.removeText(t);
-			texts.length=0;
-		}
-		init();
-	}
+    void refreshDraw(){
+        if(rendPoints !is null){
+            Something.remove(rendPoints);
+            Circles.remove(rendWheels);
+            foreach(t;texts)Text.removeText(t);
+            texts.length=0;
+        }
+        init();
+    }
 
     void addToDraw(RenderList list) {
         list.add(rendPoints, Priority(18));
         list.add(rendWheels, Priority(18));
-		foreach(t;texts)list.add(t, Priority(19));
+        foreach(t;texts)list.add(t, Priority(19));
     }
 
 }
@@ -459,32 +481,32 @@ class Footprint {
     static FootprintRenderer rend;
     FootprintRenderer.Data rendData;
     FootprintData f;
-	Transform _trf;
+    Transform _trf;
     string name;
-   // string[] padConnections;
+    // string[] padConnections;
 
-	void trf(Transform t) {
-		_trf = t;
-		rendData.trf=t;
-	}
-	
-	const(Transform) trf() {
-		return _trf;
-	}
+    void trf(Transform t) {
+        _trf = t;
+        rendData.trf=t;
+    }
+    
+    const(Transform) trf() {
+        return _trf;
+    }
 
     this(FootprintData f) {
         if (rend is null)
             rend = new FootprintRenderer;
         this.f = f;
-		//rendData = rend.addFootprint(this);
+        //rendData = rend.addFootprint(this);
         //padConnections.length = f.pads.length;
-       // foreach (i, ref p; padConnections)
+        // foreach (i, ref p; padConnections)
         //    p = f.pads[i].connection;
     }
-	void addToDraw() {
-		rendData = rend.addFootprint(this);
-		rendData.trf=_trf;
-	}
+    void addToDraw() {
+        rendData = rend.addFootprint(this);
+        rendData.trf=_trf;
+    }
 
     void removeFromDraw() {
         rend.removeFootprint(rendData);
@@ -513,28 +535,28 @@ struct Pad {
 }
 
 struct TrShape {
-	AnyShape shape;
-	Transform trf;
+    AnyShape shape;
+    Transform trf;
 }
 struct TrCircle {
-	Transform trf;
-	Circle circle;
+    Transform trf;
+    Circle circle;
 }
 struct TrRectangle {
-	Transform trf;
-	Rectangle rectangle;
+    Transform trf;
+    Rectangle rectangle;
 }
 
 
 
 class FootprintData {
     string name;
-   // Pad[] pads;
+    // Pad[] pads;
 
-	//shapes
-	TrShape[] shapes;
-	//and theirs connection (array indexes had to match)
-	string[] shapeConnection;
+    //shapes
+    TrShape[] shapes;
+    //and theirs connection (array indexes had to match)
+    string[] shapeConnection;
 
     vec2[] points;
     vec2[2][] lines;
@@ -544,18 +566,18 @@ class FootprintData {
     vec2[2] boundingBox;
     this() {
     }
-	void addShape(TrShape trShape,string connection){
-				shapes~=trShape;
-				shapeConnection~=connection;
-				assert(shapes.length==shapeConnection.length);
-	}
+    void addShape(TrShape trShape,string connection){
+        shapes~=trShape;
+        shapeConnection~=connection;
+        assert(shapes.length==shapeConnection.length);
+    }
 
-
+    
     this(FootprintData f) {
         name = f.name;
         //pads = f.pads.dup;
-		shapes = f.shapes.dup;
-		shapeConnection = f.shapeConnection.dup;
+        shapes = f.shapes.dup;
+        shapeConnection = f.shapeConnection.dup;
         points = f.points.dup;
         lines = f.lines.dup;
         trCircles = f.trCircles.dup;
@@ -573,7 +595,7 @@ class FootprintData {
         } else if (trCircles.length) {
             minn = trCircles[0].trf.pos;
         }else if (shapes.length) {
-			minn = shapes[0].trf.pos;
+            minn = shapes[0].trf.pos;
         } else {
             minn = vec2(0, 0);
         }
@@ -591,24 +613,24 @@ class FootprintData {
             maxx.y = max(l[0].y, l[1].y, maxx.y);
         }
         foreach (circle; trCircles) {
-			Transform t=circle.trf;
-			Circle c=circle.circle;
+            Transform t=circle.trf;
+            Circle c=circle.circle;
             minn.x = min(t.pos.x - c.radius, minn.x);
             minn.y = min(t.pos.y - c.radius, minn.y);
             maxx.x = max(t.pos.x + c.radius, maxx.x);
             maxx.y = max(t.pos.y + c.radius, maxx.y);
         }
-       
+        
         foreach (s; shapes) {
-			AnyShape anyShape=s.shape;
-			Triangle[] tris=anyShape.getTriangles();
-			foreach(tr;tris){
-				foreach(point;tr.tupleof){
-					vec2 p=s.trf.pos+point;
-					minn.y = min(p.y, minn.y);
-					maxx.x = max(p.x, maxx.x);
-				}
-			}
+            AnyShape anyShape=s.shape;
+            Triangle[] tris=anyShape.getTriangles();
+            foreach(tr;tris){
+                foreach(point;tr.tupleof){
+                    vec2 p=s.trf.pos+point;
+                    minn.y = min(p.y, minn.y);
+                    maxx.x = max(p.x, maxx.x);
+                }
+            }
         }
         return [minn, maxx];
     }

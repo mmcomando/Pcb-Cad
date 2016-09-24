@@ -112,106 +112,9 @@ bool isShape(T)(){
 }
 
 
-/**
- * Template to generate Universal shape
- */
-struct AnyShapeTemplate(ShapeTypes...) {
-	enum maxUnionSize=63;
-	alias FromTypes=ShapeTypes;
-	//enum types{...}    //from mixin
-	//types currentType; //from mixin
 
-	/**
-	 * returns given type with check
-	 */
-	auto get(T)(){
-		foreach(i,type;FromTypes){
-			static if(is(type==T)){
-				assert(currentType==i,"got type which is not currently bound");
-				static if(T.sizeof>maxUnionSize){
-					mixin("return _"~i.to!string~";");
-				}else{
-					mixin("return &_"~i.to!string~";");
-				}
-			}
-		}
-		assert(false);
-	}
-	/*
-	 * sets given shape
-	 */
-	auto  set(T)(T obj){
-		foreach(i,type;FromTypes){
-			static if(is(type==T)){
-				currentType=cast(Types)i;
-				static if(T.sizeof>maxUnionSize){
-					T* pointer=cast(T*)GC.malloc(T.sizeof);
-					memcpy(&obj,pointer,T.sizeof);
-					mixin("_"~i.to!string~"= pointer;");
-				}else{
-					mixin("_"~i.to!string~"=obj;");
-				}
-			}
-		}
-	}
-	Triangle[] getTriangles(){
-		final switch(currentType){
-			case Types.Rectangle:
-				return get!(Rectangle).getTriangles();
-			case Types.Circle:
-				return get!(Circle).getTriangles();
-			case Types.Triangle:
-				return get!(Triangle).getTriangles();
-			case Types.PolyLine:
-				return get!(PolyLine).getTriangles();
-			case Types.none:return [];
-		}
-	}
-	CC getBoundingCircle(){
-		final switch(currentType){
-			case Types.Rectangle:
-				return get!(Rectangle).getBoundingCircle();
-			case Types.Circle:
-				return get!(Circle).getBoundingCircle();
-			case Types.Triangle:
-				return get!(Triangle).getBoundingCircle();
-			case Types.PolyLine:
-				return get!(PolyLine).getBoundingCircle();
-			case Types.none:return CC();
-		}
-	}
-
-	//  --  Mixin --
-	/** 
-	 * Generates code for universal shape
-	 * types which can be packed to union are packed, others are allocated and there is stored their pointer
-	 */
-	static string getShapeCode(ShapeTypes...)(uint unionSize){
-		string codeChecks;
-		string codeEnum="enum Types:ubyte{\n";
-		string code="private union{\n";
-		foreach(uint i,type;ShapeTypes){
-			string typeName=type.stringof;
-			string valueName="_"~i.to!string;
-			string ampChar="&";
-			string pointer="";
-			codeEnum~=typeName~"="~i.to!string~",\n";
-			if(type.sizeof>unionSize){
-				pointer="*";
-				ampChar="";
-			}
-			code~= typeName~pointer;
-			
-			code~=" "~valueName~";\n";
-			
-			
-		}
-		codeEnum~="none\n}\n";
-		return codeEnum~code~"}\n"~codeChecks~"Types currentType=Types.none;\n";
-	}
-	mixin(getShapeCode!(ShapeTypes)(maxUnionSize));
-}
-alias AnyShape=AnyShapeTemplate!(Rectangle,Circle,Triangle,PolyLine);
+import meta;
+alias AnyShape=SafeUnion!(Rectangle,Circle,Triangle,PolyLine);
 
 //Collision functions
 
@@ -357,7 +260,7 @@ bool collide(Transform transform,AnyShape* shape,vec2 p){
 bool collide(Transform transform,PolyLine* polyLine, vec2 point) {
 	for (int i = 1; i < polyLine.points.length; i++) {
 		float qLength = minimum_distance(polyLine.points[i - 1], polyLine.points[i], point);
-		if (qLength < polyLine.traceWidth) {//TODO FIX?
+		if (qLength < polyLine.traceWidth*polyLine.traceWidth) {
 			return true;
 		}
 	}

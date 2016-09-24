@@ -61,7 +61,7 @@ class FootprintRenderer  {
 		SomethingNoTransform points;
 		SomethingNoTransform triangles;
 		SomethingNoTransform background;
-        const FootprintData f = footprint.f;
+        FootprintData f = footprint.f;
         Data d = new Data;
         vec2[2] b = f.boundingBox;
         vec2 v1 = vec2(b[0].x, b[1].y);
@@ -109,7 +109,7 @@ class FootprintRenderer  {
 		foreach (name, sh; lockstep(f.shapeConnection, f.shapes)) {
             if (name == "?" || name == "")
                 continue;
-			if(sh.shape.currentType!=sh.shape.Types.Rectangle)
+			if(!sh.shape.isType!Rectangle)
 				continue;
 			AnyShape shape=sh.shape;
 			Rectangle* rec=shape.get!Rectangle;

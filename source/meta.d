@@ -45,10 +45,12 @@ uint numberOfVariables(T)(){
 
 import std.conv:to;
 import std.traits:hasMember,ReturnType,Parameters;
+import std.meta:staticIndexOf;
 
 
 /**
- * Template to generate Universal shape
+ * Union of ConTypes... 
+ * Ensures correct access with assert
  */
 struct SafeUnion(ConTypes...) {
 	alias FromTypes=ConTypes;
@@ -60,8 +62,9 @@ struct SafeUnion(ConTypes...) {
 	 * returns given type with check
 	 */
 	auto get(T)(){
-		foreach(i,type;FromTypes){
-			static if(is(type==T)){
+		static assert(properType!T,"Given Type is not present in union");
+		foreach(i,Type;FromTypes){
+			static if(is(Type==T)){
 				assert(currentType==i,"Got type which is not currently bound.");
 				mixin("return &_"~i.to!string~";");
 			}
@@ -69,11 +72,39 @@ struct SafeUnion(ConTypes...) {
 		assert(false);
 	}
 	/**
-	 * sets given shape
+	 * Returns enum value for Type
+	 */
+	bool isType(T)(){
+		static assert(properType!T,"Given Type is not present in union");
+		bool ok=false;
+		foreach(i,Type;FromTypes){
+			static if(is(Type==T)){
+				Types type=cast(Types)i;
+				if(currentType==type){
+					ok=true;
+				}
+			}
+		}
+		return ok;
+	}
+	/**
+	 * Returns enum value for Type
+	 */
+	static Types getEnum(T)(){
+		static assert(properType!T,"Given Type is not present in union");
+		foreach(i,Type;FromTypes){
+			static if(is(Type==T)){
+				return cast(Types)i;
+			}
+		}
+	}
+	/**
+	 * Sets given Type
 	 */
 	auto  set(T)(T obj){
-		foreach(i,type;FromTypes){
-			static if(is(type==T)){
+		static assert(properType!T,"Given Type is not present in union");
+		foreach(i,Type;FromTypes){
+			static if(is(Type==T)){
 				currentType=cast(Types)i;
 				mixin("_"~i.to!string~"=obj;");
 			}
@@ -155,6 +186,12 @@ struct SafeUnion(ConTypes...) {
 		codeEnum~="none\n}\n";
 		return codeEnum~code~"}\nTypes currentType=Types.none;\n";
 	}
+	/**
+	 *  Checks if Type is in union Types
+	 */
+	private static  bool properType(T)(){
+		return staticIndexOf!(T,FromTypes)!=-1;
+	}
 	mixin(getCode!(FromTypes));
 }
 /// Example Usage
@@ -181,6 +218,8 @@ unittest{
 	alias Shape=SafeUnion!(Triangle,Rectangle);
 	Shape shp;
 	shp.set(Triangle());
+	assert(shp.isType!Triangle);
+	assert(!shp.isType!Rectangle);
 	assert(shp.add(6)==16);//Bad error messages if opDispatch!("add") cannot be instantiated
 	assert(shp.opDispatch!("add")(6)==16);//Better error messages 
 	assert(shp.apply!strangeID==123);
@@ -191,4 +230,12 @@ unittest{
 	shp.currentType=shp.Types.none;
 	//shp.apply!strangeID;//Crash
 	//shp.add(6);//Crash
+	final switch(shp.currentType){
+		case shp.getEnum!Triangle:
+			break;
+		case Shape.getEnum!Rectangle:
+			break;
+		case Shape.Types.none:
+			break;
+	}
 }

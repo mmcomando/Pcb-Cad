@@ -141,8 +141,11 @@ final class WindowSDL : Window {
             throw new Exception("Failed to create a SDL window: " ~ to!string(SDL_GetError()));
 
         SDL_GL_CreateContext(sdlwindow);
-
-        DerelictGL3.reload();
+		try{
+        	DerelictGL3.reload();
+		}catch(Exception e){
+			throw new Exception("Can not load given opengl context(3.3).");
+		}
         auto hookDebugCallback = cast(typeof(glDebugMessageCallbackARB)) glDebugMessageCallback;
         hookDebugCallback(cast(GLDEBUGPROCARB)&glErrorCallback, null);
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);

@@ -34,7 +34,7 @@ private FootprintData fromKicadFootprint(ki_mod.Module md) {
 		vec2 p2 = vec2(ob.x2, ob.y2)*SC;
 		Transform trf;
 		trf.pos=p1;
-        ft.trCircles ~= TrCircle(trf, Circle((p1 - p2).length));
+        //ft.trCircles ~= TrCircle(trf, Circle((p1 - p2).length));
     }
     foreach (uint i, ref ob; md.pads) {
 		vec2 p1 = vec2(ob.po.x, ob.po.y)*SC;
