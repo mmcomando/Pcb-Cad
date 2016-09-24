@@ -51,7 +51,7 @@ void update(PcbProject proj, vec2 globalMousePos) {
 void updateTrace(PcbProject proj, vec2 globalMousePos) {
     if (gameEngine.window.keyPressed('r'))
         if (Trace t = proj.getTrace(globalMousePos)) {
-            proj.removeTrace(t);
+            proj.actions.add(new RemoveTrace(proj,t));
         }
 
 }
@@ -183,7 +183,7 @@ void addTrace(PcbProject proj, vec2 globalMousePos) {
         if (gameEngine.window.keyPressed('k') && tmpTrace !is null) {
 
             if (connName.empty || connName == tmpTrace.connection) {
-                proj.addTrace(tmpTrace);
+                proj.actions.add(new AddTrace(proj,tmpTrace));
                 writeln("added: ", tmpTrace.connection);
                 tmpTrace = null;
             }
@@ -264,7 +264,7 @@ void addTraceDifferent(PcbProject proj, vec2 globalMousePos) {
 		string connName = proj.collideWithConnection(Transform(), sh,tmpTrace.connection);
 		writeln(tmpTrace.connection, " vs ", connName);
 		if (tmpTrace.connection.empty|| connName.empty || connName == tmpTrace.connection) {
-            proj.addTrace(tmpTrace);
+            proj.actions.add(new AddTrace(proj,tmpTrace));
             writeln("added: ", tmpTrace.connection);
             tmpTrace = null;
         }

@@ -58,7 +58,6 @@ class FootprintRenderer  {
 
     Data addFootprint(Footprint footprint) {
 		SomethingNoTransform lines;
-		SomethingNoTransform points;
 		SomethingNoTransform triangles;
 		SomethingNoTransform background;
         FootprintData f = footprint.f;
@@ -71,8 +70,6 @@ class FootprintRenderer  {
         background = SomethingNoTransform.fromPoints([v1, v2, v4, v4, v2, v3]);
         background.color = vec3(0.8, 0.8, 0.8);
         background.mode = GL_TRIANGLES;
-        foreach (ref p; f.points) {
-        }
 
         vec2[] rendLines;
         rendLines.reserve(f.lines.length * 2);
@@ -84,13 +81,8 @@ class FootprintRenderer  {
         lines.color = vec3(0, 1, 1);
         lines.mode = GL_LINES;
 
-		points = SomethingNoTransform.fromPoints(f.points);
-        points.color = vec3(0, 1, 0);
-        points.mode = GL_POINTS;
         Circles.CircleData[] metas;
-        foreach (ref c; f.trCircles) {
-            metas ~= Circles.CircleData(vec3(0, 0, 1), c.trf.pos, c.circle.radius);
-        }
+
         vec2[] trianglePoints;
         foreach (shape; f.shapes) {
 			AnyShape s=shape.shape;
@@ -140,7 +132,6 @@ class FootprintRenderer  {
 		d.group.add(background);
 		d.group.add(triangles);
 		d.group.add(lines);
-		d.group.add(points);
         return d;
     }
 

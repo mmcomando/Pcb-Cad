@@ -21,7 +21,7 @@ import shapes;
 
 struct PadID {
     Footprint footprint;
-    uint shapeNum;//only rectangles
+    uint shapeNum;
 }
 
 struct ConnectionsManager {
@@ -271,17 +271,12 @@ class PcbProject {
     void addTrace(Trace t) {
         traces ~= t;
         connectionsManager.add(t);
+        t.refreshDraw();
     }
 
     void removeTrace(Trace trace) {
-        foreach (i, t; traces) {
-            if (t == trace) {
-                traces[i] = traces[$ - 1];
-                traces = traces[0 .. $ - 1];
-                Circles.remove(trace.rendWheels);
-                Something.remove(trace.rendPoints);
-            }
-        }
+        trace.removeDraw();
+        traces.removeElementInPlace(trace);
         //remove from connections
         connectionsManager.remove(trace);
     }
@@ -403,6 +398,38 @@ class RemoveFootprint : Action {
     }
 
 }
+class RemoveTrace : Action {
+    PcbProject project;
+    Trace trace;
+    this(PcbProject project, Trace tr) {
+        this.project = project;
+        trace = tr;
+    }
+
+    void doAction() {
+        project.removeTrace(trace);
+    }
+    
+    void undoAction() {
+        project.addTrace(trace);
+    }    
+}
+class AddTrace : Action {
+    PcbProject project;
+    Trace trace;
+    this(PcbProject project, Trace tr) {
+        this.project = project;
+        trace = tr;
+    }
+    
+    void doAction() {
+        project.addTrace(trace);
+    }
+    
+    void undoAction() {
+        project.removeTrace(trace);
+    }    
+}
 
 class Trace {
     string connection;
@@ -413,8 +440,7 @@ class Trace {
     this(float traceWidth) {
         this.polyLine.traceWidth = traceWidth;
     }
-
-    void init() {
+    void initDraw() {
         Triangle[] trianglePoints = polyLine.getTriangles();
         Circles.CircleData[] metas;
         foreach (p; polyLine.points) {
@@ -447,14 +473,19 @@ class Trace {
         rendPoints.color = vec3(1, 0, 0);
         rendPoints.mode = GL_TRIANGLES;
     }
-    void refreshDraw(){
+    void removeDraw(){
         if(rendPoints !is null){
             Something.remove(rendPoints);
             Circles.remove(rendWheels);
             foreach(t;texts)Text.removeText(t);
             texts.length=0;
+            rendPoints=null;
+            rendWheels=null;
         }
-        init();
+    }
+    void refreshDraw(){
+        removeDraw();
+        initDraw();
     }
 
     void addToDraw(RenderList list) {
@@ -558,11 +589,8 @@ class FootprintData {
     //and theirs connection (array indexes had to match)
     string[] shapeConnection;
 
-    vec2[] points;
     vec2[2][] lines;
-    TrCircle[] trCircles;
     vec2[] snapPoints;
-
     vec2[2] boundingBox;
     this() {
     }
@@ -575,12 +603,9 @@ class FootprintData {
     
     this(FootprintData f) {
         name = f.name;
-        //pads = f.pads.dup;
         shapes = f.shapes.dup;
         shapeConnection = f.shapeConnection.dup;
-        points = f.points.dup;
         lines = f.lines.dup;
-        trCircles = f.trCircles.dup;
         boundingBox = f.boundingBox;
         snapPoints = f.snapPoints;
     }
@@ -588,37 +613,20 @@ class FootprintData {
     vec2[2] computeBoundingBox() const {
         vec2 minn;
         vec2 maxx;
-        if (points.length) {
-            minn = points[0];
-        } else if (lines.length) {
+        if (lines.length) {
             minn = lines[0][0];
-        } else if (trCircles.length) {
-            minn = trCircles[0].trf.pos;
-        }else if (shapes.length) {
+        } else if (shapes.length) {
             minn = shapes[0].trf.pos;
         } else {
             minn = vec2(0, 0);
         }
         maxx = minn + vec2(0.00001, 0.00001);
-        foreach (p; points) {
-            minn.x = min(p.x, minn.x);
-            minn.y = min(p.y, minn.y);
-            maxx.x = max(p.x, maxx.x);
-            maxx.y = max(p.y, maxx.y);
-        }
+       
         foreach (l; lines) {
             minn.x = min(l[0].x, l[1].x, minn.x);
             minn.y = min(l[0].y, l[1].y, minn.y);
             maxx.x = max(l[0].x, l[1].x, maxx.x);
             maxx.y = max(l[0].y, l[1].y, maxx.y);
-        }
-        foreach (circle; trCircles) {
-            Transform t=circle.trf;
-            Circle c=circle.circle;
-            minn.x = min(t.pos.x - c.radius, minn.x);
-            minn.y = min(t.pos.y - c.radius, minn.y);
-            maxx.x = max(t.pos.x + c.radius, maxx.x);
-            maxx.y = max(t.pos.y + c.radius, maxx.y);
         }
         
         foreach (s; shapes) {
