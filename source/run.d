@@ -131,7 +131,6 @@ void handleInput(){
             project.actions.back();
         }
     }
-    if ( gameEngine.window.keyDown(Key.shift)) writeln("ztrl");
     
     // -- Grab support
     {

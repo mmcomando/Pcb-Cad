@@ -77,11 +77,11 @@ struct Circle {
 }
 struct PolyLine {
 	vec2[] points;
-	float traceWidth;
+	float width;
 
 	CC getBoundingCircle(){
 		CC c=smallestEnclosingCircle(points);
-		float d=sqrt(c.r)+traceWidth/2;
+		float d=sqrt(c.r)+width/2;
 		c.r=d*d;
 		return c;
 	}
@@ -91,7 +91,7 @@ struct PolyLine {
 		Triangle[] triangles;
 		foreach (p; points[1 .. $]) {
 			vec2 normal = (p - last).normalized();
-			vec2 tangent = vec2(normal.y, -normal.x) * traceWidth / 2;
+			vec2 tangent = vec2(normal.y, -normal.x) * width / 2;
 			vec2 v1 = last + tangent;
 			vec2 v2 = p + tangent;
 			vec2 v3 = p - tangent;
@@ -260,7 +260,7 @@ bool collide(Transform transform,AnyShape* shape,vec2 p){
 bool collide(Transform transform,PolyLine* polyLine, vec2 point) {
 	for (int i = 1; i < polyLine.points.length; i++) {
 		float qLength = minimum_distance(polyLine.points[i - 1], polyLine.points[i], point);
-		if (qLength < polyLine.traceWidth*polyLine.traceWidth) {
+		if (qLength < polyLine.width*polyLine.width) {
 			return true;
 		}
 	}

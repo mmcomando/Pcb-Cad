@@ -106,7 +106,6 @@ class PcbProject {
             if (name == ignore) {
                 continue;
             }
-            //if (collideUniversal(Transform(),Transform(),trace.polyLine, tr.polyLine)) {
             if (collideUniversal(Transform(),trf,tr.polyLine, shape)) {
                 writeln("colide with trace: ", name, " num: ",i);
                 return name;
@@ -114,11 +113,8 @@ class PcbProject {
         }
         foreach (i,ff; footprints) {
             foreach (j,name, trShape; lockstep(ff.f.shapeConnection, ff.f.shapes)) {
-                //foreach (pNum, pad; ff.f.shapesRectangle) {
-                //string name = ff.padConnections[pNum];
                 if (name == ignore)
                     continue;
-                //TrShape trShape=ff.f.shapes[pad.shapeID];
                 if (collideUniversal(trf,trShape.trf*ff.trf,shape,trShape.shape)) {
                     writefln("colide with %s  pad(%s): %s", i,j, name);
                     return name;
@@ -126,7 +122,32 @@ class PcbProject {
             }
         }
         return "";
-    }
+	}
+	Trace[] getCollidingTraces(Footprint ft) {
+		Trace[] toReturn;
+		foreach(trShape;ft.f.shapes){
+			foreach (tr; traces) {
+				if (collideUniversal(Transform(),trShape.trf*ft.trf,tr.polyLine, trShape.shape)) {
+					toReturn~=tr;
+				}
+			}
+		}
+		return toReturn;
+	}
+	vec2*[] getCollidingPoint(Footprint ft,Trace tr){
+		vec2*[] toReturn;
+		foreach(trShape;ft.f.shapes){
+			foreach (ref point; tr.polyLine.points) {
+				Circle circ=Circle(tr.polyLine.width);
+				Transform circTrf=Transform(point);
+				if (collideUniversal(circTrf,trShape.trf*ft.trf,circ, trShape.shape)) {
+					toReturn~=&point;
+				}
+			}
+		}
+		return toReturn;
+	}
+
 }
 
 
@@ -138,19 +159,19 @@ class Trace {
     Circles rendWheels;
     Text[] texts;
     this(float traceWidth) {
-        this.polyLine.traceWidth = traceWidth;
+        this.polyLine.width = traceWidth;
     }
     void initDraw() {
         Triangle[] trianglePoints = polyLine.getTriangles();
         Circles.CircleData[] metas;
         foreach (p; polyLine.points) {
-            metas ~= Circles.CircleData(vec3(1, 0, 0), p, polyLine.traceWidth / 2);
+            metas ~= Circles.CircleData(vec3(1, 0, 0), p, polyLine.width / 2);
         }
         vec2 last_point=polyLine.points[0];
         foreach (p; polyLine.points[1..$]) {
             Text txt=Text.fromString(connection);
             vec2 pointsDt=p-last_point;
-            float scale=polyLine.traceWidth*0.5;
+            float scale=polyLine.width*0.5;
             float rot=vectorToAngle(pointsDt);
             if(abs(rot)>PI/2){
                 rot+=PI;

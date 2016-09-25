@@ -212,9 +212,6 @@ private:
 		}	
 		if(event.keyCode>=KeyCode.KEY_A && event.keyCode<=KeyCode.KEY_Z){
 			ubyte add=32;
-			if(keyDown(Key.shift)){
-				add=0;
-			}
 			if(event.action==KeyAction.KeyDown){
 				downKeys[event.keyCode+add] = true;
 				pressedKeys[event.keyCode+add] = true;

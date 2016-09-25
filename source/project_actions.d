@@ -23,6 +23,10 @@ Trace tmpTrace;
 Trace[] traces;
 bool snapEnabled = true;
 Footprint grabbed;
+
+Trace[] grabbedCollidingTraces;
+vec2*[] grabbedCollidingTracesPoints;
+vec2[] grabbedCollidingTracesPointsDT;
 Something traceRend;
 float traceWidth = 0.001;
 vec2 grabbedDT;
@@ -30,21 +34,29 @@ vec2 grabbedDT;
 
 
 class TransformFootprint : Action {
+	PcbProject project;
     Transform before;
     Transform after;
     Footprint footprint;
-    this(Footprint ft, Transform before, Transform after) {
+	this(PcbProject project,Footprint ft, Transform before, Transform after) {
         footprint = ft;
         this.before = before;
         this.after = after;
+		this.project=project;
     }
     
     void doAction() {
+		grabbedDT=vec2(0,0);
+		grabbedPointsStart(project,footprint);
         footprint.trf = after;
+		grabbedPointsContinue(project,footprint.trf.pos);
     }
     
     void undoAction() {
+		grabbedDT=vec2(0,0);
+		grabbedPointsStart(project,footprint);
         footprint.trf = before;
+		grabbedPointsContinue(project,footprint.trf.pos);
     }
     
 }
@@ -57,12 +69,10 @@ class RemoveFootprint : Action {
     }
     
     void doAction() {
-        writeln("removefotptirnd");
         project.removeFootprint(footprint);
     }
     
     void undoAction() {
-        writeln("addd fotptirnd");
         project.addFootprint(footprint);
     }
     
@@ -103,12 +113,31 @@ class AddTrace : Action {
 
 
 
-
-
+void grabbedPointsStart(PcbProject proj,Footprint ft){//rot
+	grabbedCollidingTraces=proj.getCollidingTraces(ft);
+	grabbedCollidingTracesPoints.length=0;
+	grabbedCollidingTracesPointsDT.length=0;
+	foreach(tr;grabbedCollidingTraces){
+		grabbedCollidingTracesPoints~=proj.getCollidingPoint(ft,tr);
+	}
+	grabbedCollidingTracesPointsDT.length=grabbedCollidingTracesPoints.length;
+	foreach(i,ref dt;grabbedCollidingTracesPointsDT){
+		dt=*grabbedCollidingTracesPoints[i]-ft.trf.pos;
+	}
+}
+void grabbedPointsContinue(PcbProject proj,vec2 pos){
+	foreach(i,vec2* point;grabbedCollidingTracesPoints){
+		vec2 dt=grabbedCollidingTracesPointsDT[i];
+		*point=pos + grabbedDT+dt;
+	}
+	foreach(tr;grabbedCollidingTraces){
+		tr.refreshDraw();
+	}
+}
 
 void update(PcbProject proj, vec2 globalMousePos) {
 	if (tmpTrace !is null) {
-		tmpTrace.polyLine.traceWidth=traceWidth;
+		tmpTrace.polyLine.width=traceWidth;
 	}
     snapEnabled = true;
     if (grabbed !is null || tmpTrace !is null)
@@ -139,8 +168,9 @@ void addFootprint(PcbProject proj, vec2 globalMousePos) {
 		Transform tmp=grabbed.trf;
 		tmp.pos=globalMousePos + grabbedDT;
 		grabbed.trf=tmp;
+		grabbedPointsContinue(proj,globalMousePos);
         if (gameEngine.window.mouseButtonReleased(MouseButton.left) || gameEngine.window.keyPressed('m')) {
-            proj.actions.add(new TransformFootprint(grabbed, before, grabbed.trf));
+            proj.actions.add(new TransformFootprint(proj,grabbed, before, grabbed.trf));
             grabbed = null;
         }
     } else {
@@ -149,13 +179,14 @@ void addFootprint(PcbProject proj, vec2 globalMousePos) {
                 grabbedDT = f.trf.pos - globalMousePos;
                 before = f.trf;
                 grabbed = f;
+				grabbedPointsStart(proj,grabbed);
             } else if (gameEngine.window.keyPressed('r')) {
                 //removeFootprint(i);
                 proj.actions.add(new RemoveFootprint(proj, f));
             } else if (gameEngine.window.keyPressed('t')) {
 				Transform after=f.trf;
 				after.rot+=PI_4;
-                proj.actions.add(new TransformFootprint(f, f.trf, after));
+				proj.actions.add(new TransformFootprint(proj,f, f.trf, after));
             }
         }
 

@@ -47,7 +47,8 @@ import std.conv:to;
 import std.traits:hasMember,ReturnType,Parameters;
 import std.meta:staticIndexOf;
 
-
+@nogc:
+nothrow:
 /**
  * Union of ConTypes... 
  * Ensures correct access with assert
